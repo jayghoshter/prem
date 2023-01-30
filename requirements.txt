@@ -2,3 +2,7 @@ rich>10.15
 requests
 addict==2.3
 pdfrw
+click
+pdfplumber
+pyfzf
+pikepdf
