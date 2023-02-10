@@ -1,8 +1,9 @@
-rich>10.15
+rich
 requests
-addict==2.3
+addict
 pdfrw
 click
 pdfplumber
 pyfzf
 pikepdf
+plumbum

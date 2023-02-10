@@ -11,7 +11,7 @@ import click
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()-_]+'
 
 def driver(fname):
-    pdf = PDF(fname)
+    pdf = PDF(fname, engine='pikepdf')
     dois_in_mdata = re.compile(doi_regex).findall(" ".join(pdf.metadata.values()))
     cr = CrossRef()
 
@@ -33,13 +33,12 @@ def driver(fname):
             crossref_matches = cr.query(querystr)
             crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
             crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
-            try: 
-                selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)[0]
+            selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
+            if selected:
+                selected = selected[0]
                 selected_index = crossref_identifiers.index(selected)
                 pdf.metadata.update( crossref_matches_processed[selected_index] )
                 pdf.rename(selected + '.pdf')
-            except plumbum.commands.processes.ProcessExecutionError:
-                pass
 
 def main():
 
