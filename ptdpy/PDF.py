@@ -41,7 +41,11 @@ class PDF:
             return
 
         with Pdf.open(filename) as pdf:
-            self.metadata = {f"{str(k)[1:]}": str(v) for k,v in pdf.docinfo.items()}
+            try:
+                self.metadata = {f"{str(k)[1:]}": str(v) for k,v in pdf.docinfo.items()}
+            except Exception as e:
+                print(f"ERROR: Unknown error reading pdf metadata (docinfo) for file {filename}.")
+                print(f"{e.__class__.__name__}: {e}")
             self.pages = pdf.pages
 
     def _write_pdfrw(self, filename=None):

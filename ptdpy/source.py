@@ -14,7 +14,9 @@ class CrossRef(Source):
         response = requests.get(f"{self.BASE_URL}/{doi}")
 
         if not response.ok: 
-            raise RuntimeError(f"Error fetching data for doi: {doi}")
+            print(f"Error fetching data for doi: {doi}")
+            return None
+            # raise RuntimeError(f"Error fetching data for doi: {doi}")
 
         return Dict(response.json()["message"])
 

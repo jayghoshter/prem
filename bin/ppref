@@ -7,12 +7,17 @@ import re
 from pyfzf.pyfzf import FzfPrompt
 import plumbum
 import click
+from addict import Dict
+from rich import print
 
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
-def driver(fname):
+def driver(fname, **kwargs):
+    print(f"Processing: {fname}")
+    kwargs = Dict(kwargs)
     pdf = PDF(fname, engine='pikepdf')
-    dois_in_mdata = re.compile(doi_regex).findall(" ".join(pdf.metadata.values()))
+    doi_regex_compiled = re.compile(doi_regex)
+    dois_in_mdata = doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
     cr = CrossRef()
 
     fzf = FzfPrompt()
@@ -20,36 +25,63 @@ def driver(fname):
     
     if dois_in_mdata: 
         doi = dois_in_mdata[0]
+        print(f"  > Found DOI: {doi} in file metadata")
         mdata = cr.fetch_by_doi(doi)
+
+        if not mdata:
+            return 
+
+        print("  > Found metadata on CrossRef!")
         mdata = extract_from_crossref_metadata(mdata)
 
         pdf.metadata.update(mdata)
         outfname = f"{mdata['Year']} - {mdata['Author']} - {mdata['Title']}.pdf"
         pdf.rename(outfname)
     else:
+        print("  > Couldn't find DOI in file metadata. Looking in text.")
         text = pdf.pages_to_text(3)
-        querystr = click.edit(text)
-        if querystr: 
-            crossref_matches = cr.query(querystr)
-            crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
-            crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
-            selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
-            if selected:
-                selected = selected[0]
-                selected_index = crossref_identifiers.index(selected)
-                pdf.metadata.update( crossref_matches_processed[selected_index] )
-                pdf.rename(selected + '.pdf')
+        dois_in_text = doi_regex_compiled.findall(text)
+
+        if dois_in_text:
+            doi = dois_in_text[0]
+            print(f"  > Found DOI: {doi} in file metadata")
+            mdata = cr.fetch_by_doi(doi)
+
+            if not mdata: 
+                return 
+
+            print("  > Found metadata on CrossRef!")
+            mdata = extract_from_crossref_metadata(mdata)
+
+            pdf.metadata.update(mdata)
+            outfname = f"{mdata['Year']} - {mdata['Author']} - {mdata['Title']}.pdf"
+            pdf.rename(outfname)
+
+        elif not kwargs.auto: 
+            print(f"  > Couldn't find DOI in pdf text. Manual input required!")
+            querystr = click.edit(text)
+            if querystr: 
+                crossref_matches = cr.query(querystr)
+                crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
+                crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
+                selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
+                if selected:
+                    selected = selected[0]
+                    selected_index = crossref_identifiers.index(selected)
+                    pdf.metadata.update( crossref_matches_processed[selected_index] )
+                    pdf.rename(selected + '.pdf')
 
 def main():
 
     ap = argparse.ArgumentParser()
 
     ap.add_argument("files", nargs = '*', help="PDF files to operate on")
+    ap.add_argument("-a", "--auto", action="store_true", help="auto mode, no manual inputs")
 
     args = ap.parse_args()
 
     for current_file in args.files: 
-        driver(current_file)
+        driver(current_file, **vars(args))
 
 if __name__ == "__main__": 
     main()
