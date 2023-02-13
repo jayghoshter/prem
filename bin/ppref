@@ -8,7 +8,7 @@ from pyfzf.pyfzf import FzfPrompt
 import plumbum
 import click
 
-doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()-_]+'
+doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
 def driver(fname):
     pdf = PDF(fname, engine='pikepdf')

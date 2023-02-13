@@ -6,7 +6,7 @@ import pdfplumber
 import os
 import re
 
-doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()-_]+'
+doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
 def fetch_metadata(doi:str, base_url:str ="https://api.crossref.org/works/") -> Dict: 
     """ Fetch metadata for a given DOI """
