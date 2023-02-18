@@ -35,7 +35,7 @@
       in
       {
         devShell = pkgs.mkShell {
-            name = "ptdpy";
+            name = "prem";
           buildInputs = [
             devEnvironment
           ];

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from ptdpy import PDF, CrossRef
-from ptdpy.utils import extract_from_crossref_metadata
+from prem import PDF, CrossRef
+from prem.utils import extract_from_crossref_metadata
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
