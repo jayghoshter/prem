@@ -9,6 +9,9 @@ import plumbum
 import click
 from addict import Dict
 from rich import print
+import subprocess 
+import signal
+import os
 
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
@@ -59,7 +62,10 @@ def driver(fname, **kwargs):
 
         elif not kwargs.auto: 
             print(f"  > Couldn't find DOI in pdf text. Manual input required!")
+            # TODO: Make generic
+            pdf_process = subprocess.Popen(['zathura', fname])
             querystr = click.edit(text)
+            pdf_process.kill()
             if querystr: 
                 crossref_matches = cr.query(querystr)
                 crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
