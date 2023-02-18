@@ -13,8 +13,8 @@ PDF_LINKS = {
         }
 
 def get_pdf(key, filename=None, headers=None):
-    cachefile = f'{os.environ["HOME"]}/.cache/ptdpy/{key}.pdf'
-    filename = filename if filename else f"/tmp/ptdpy/{next(tempfile._get_candidate_names())}.pdf"
+    cachefile = f'{os.environ["HOME"]}/.cache/prem/{key}.pdf'
+    filename = filename if filename else f"/tmp/prem/{next(tempfile._get_candidate_names())}.pdf"
 
     ua = UserAgent()
 

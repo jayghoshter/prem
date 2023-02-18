@@ -4,13 +4,13 @@ from pdfrw import IndirectPdfDict
 import sys
 import os
 
-from ptdpy.utils import fetch_metadata
-from ptdpy.utils import query_title
-from ptdpy.utils import get_pdf_metadata
-from ptdpy.utils import modify_pdf_metadata
-from ptdpy.utils import get_doi_from_pdf_metadata
-from ptdpy.utils import delete_metadata_key
-from ptdpy.utils import extract_n_pdf_pages
+from prem.utils import fetch_metadata
+from prem.utils import query_title
+from prem.utils import get_pdf_metadata
+from prem.utils import modify_pdf_metadata
+from prem.utils import get_doi_from_pdf_metadata
+from prem.utils import delete_metadata_key
+from prem.utils import extract_n_pdf_pages
 
 # FIXME:
 sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))

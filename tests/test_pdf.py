@@ -1,4 +1,4 @@
-from ptdpy import PDF
+from prem import PDF
 import os
 import sys
 

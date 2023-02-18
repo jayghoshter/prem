@@ -1,4 +1,4 @@
-from ptdpy import CrossRef
+from prem import CrossRef
 
 def test_crossref_doi():
     cr = CrossRef()
