@@ -5,8 +5,12 @@ import unicodedata
 import pdfplumber
 import os
 import re
+from joblib import Memory
 
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
+
+CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
+memory = Memory(location=CACHE_DIR, verbose=0)
 
 def fetch_metadata(doi:str, base_url:str ="https://api.crossref.org/works/") -> Dict: 
     """ Fetch metadata for a given DOI """
@@ -16,6 +20,19 @@ def fetch_metadata(doi:str, base_url:str ="https://api.crossref.org/works/") -> 
         raise RuntimeError(f"Error fetching data for doi: {doi}")
 
     return Dict(response.json()["message"])
+
+@memory.cache
+def fetch_metadata_crossref(doi:str):
+        print(f"Fetching data for {doi} using CrossRef... ", end="")
+        response = requests.get(f"https://api.crossref.org/works/{doi}")
+
+        if not response.ok: 
+            print(f"Error fetching data for doi: {doi}")
+            return None
+            # raise RuntimeError(f"Error fetching data for doi: {doi}")
+
+        print("done!")
+        return Dict(response.json()["message"])
 
 def query_title(string:str, base_url="https://api.crossref.org/works?query=") :
     """ Given a title string, return search results """

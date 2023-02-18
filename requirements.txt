@@ -7,3 +7,4 @@ pdfplumber
 pyfzf
 pikepdf>=7.1.0
 plumbum
+joblib

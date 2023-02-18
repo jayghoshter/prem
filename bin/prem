@@ -34,7 +34,6 @@ def driver(fname, **kwargs):
         if not mdata:
             return 
 
-        print("  > Found metadata on CrossRef!")
         mdata = extract_from_crossref_metadata(mdata)
 
         pdf.metadata.update(mdata)
@@ -53,7 +52,6 @@ def driver(fname, **kwargs):
             if not mdata: 
                 return 
 
-            print("  > Found metadata on CrossRef!")
             mdata = extract_from_crossref_metadata(mdata)
 
             pdf.metadata.update(mdata)

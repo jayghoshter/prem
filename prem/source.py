@@ -1,5 +1,6 @@
 import requests
 from addict import Dict
+from prem.utils import fetch_metadata_crossref
 
 class Source:
     def __init__(self):
@@ -11,19 +12,12 @@ class CrossRef(Source):
         self.BASE_URL = "https://api.crossref.org/works"
 
     def fetch_by_doi(self, doi:str):
-        response = requests.get(f"{self.BASE_URL}/{doi}")
-
-        if not response.ok: 
-            print(f"Error fetching data for doi: {doi}")
-            return None
-            # raise RuntimeError(f"Error fetching data for doi: {doi}")
-
-        return Dict(response.json()["message"])
+        return fetch_metadata_crossref(doi)
 
     def query(self, string):
         """ Given a title string, return search results """
         response = requests.get(f"{self.BASE_URL}?query={string}")
-        
+
         if not response.ok: 
             print(response)
             raise RuntimeError(f"Error querying for string: {string}")
