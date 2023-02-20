@@ -2,8 +2,6 @@ import shutil
 import tempfile
 import requests
 import os
-from fake_useragent import UserAgent
-
 
 PDF_LINKS = {
         'origin_of_gravity': 'https://www.rroij.com/open-access/the-origin-of-gravity.pdf',
@@ -16,10 +14,8 @@ def get_pdf(key, filename=None, headers=None):
     cachefile = f'{os.environ["HOME"]}/.cache/prem/{key}.pdf'
     filename = filename if filename else f"/tmp/prem/{next(tempfile._get_candidate_names())}.pdf"
 
-    ua = UserAgent()
-
-    if not headers:
-        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36'}
+    os.makedirs(os.path.dirname(cachefile), exist_ok=True)
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     if not os.path.isfile(cachefile):
         r = requests.get(PDF_LINKS[key], stream=True, headers=headers)
