@@ -9,6 +9,16 @@ import plumbum
 import click
 from rich import print
 from types import SimpleNamespace
+import readline
+
+def input_with_prefill(prompt, text):
+    def hook():
+        readline.insert_text(text)
+        readline.redisplay()
+    readline.set_pre_input_hook(hook)
+    result = input(prompt)
+    readline.set_pre_input_hook()
+    return result
 
 def check_doi_in_metadata(pdf, source):
     dois_in_mdata = PDF.doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
@@ -30,13 +40,16 @@ def check_doi_in_metadata(pdf, source):
         return True
     return False
 
-def check_doi_in_text(pdf, source):
+def check_doi_in_text(pdf, source, auto=False):
     text = pdf.pages_to_text(3)
     dois_in_text = PDF.doi_regex_compiled.findall(text)
 
     if dois_in_text:
         doi = dois_in_text[0]
         print(f"  > Found DOI: {doi} in pdf text")
+
+        if not auto:
+            doi = input_with_prefill("Correct DOI: ", doi)
 
         mdata = source.fetch_by_doi(doi)
         if not mdata: 
@@ -91,7 +104,7 @@ def driver(fname, **kwargs):
     print("  > Looking for DOI in file metadata.")
     if not check_doi_in_metadata(pdf, cr):
         print("  > Couldn't find DOI in file metadata. Looking in text.")
-        if not check_doi_in_text(pdf, cr):
+        if not check_doi_in_text(pdf, cr, kwargs.auto):
             if not kwargs.auto: 
                 print(f"  > Couldn't find DOI in pdf text. Manual input required!")
                 manual_query(pdf, cr)
