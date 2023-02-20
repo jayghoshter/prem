@@ -111,4 +111,8 @@ class PDF:
         final_string = strtemplate
         for t,v in zip(tags, values):
             final_string = final_string.replace(t, str(v))
+
+        if Path(final_string).suffix.lower() != '.pdf':
+            final_string = final_string + '.pdf'
+
         return final_string
