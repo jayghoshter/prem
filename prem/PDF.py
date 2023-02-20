@@ -67,7 +67,8 @@ class PDF:
                 pdf.docinfo[key] = v
             with pdf.open_metadata() as meta:
                 meta.load_from_docinfo(pdf.docinfo)
-            Path(filename).parent.mkdir(parents=True, exist_ok=True)
+            if filename: 
+                Path(filename).parent.mkdir(parents=True, exist_ok=True)
             pdf.save(filename)
 
     def rename(self, newname=None, name_template=None):
