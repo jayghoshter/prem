@@ -16,7 +16,6 @@ def fetch_metadata_crossref(doi:str):
     """
     Fetch metadata for a given DOI from CrossRef
     """
-    print(f"Fetching data for {doi} using CrossRef... ", end="")
     response = requests.get(f"https://api.crossref.org/works/{doi}")
 
     if not response.ok: 
@@ -24,7 +23,6 @@ def fetch_metadata_crossref(doi:str):
         return None
         # raise RuntimeError(f"Error fetching data for doi: {doi}")
 
-    print("done!")
     return defaultdict(str, response.json()["message"])
 
 @memory.cache
