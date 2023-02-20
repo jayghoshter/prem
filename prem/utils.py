@@ -43,8 +43,9 @@ def extract_from_crossref_metadata(mdata:dict):
     """
     Extract metadata from given crossref metadata dictionary.
     """
-    # TODO: Fix this and clean it up
     outdict = defaultdict(str)
+    mdata = defaultdict(str, mdata)
+
     outdict['Title'] = mdata.get('title', ['NoTitle'])[0].replace('/', '-') if mdata['title'] else 'NoTitle'
     outdict['Author'] = mdata['author'][0].get('family', ['NoAuthor']) if mdata['author'] else 'NoAuthor'
 
