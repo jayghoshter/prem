@@ -67,7 +67,9 @@ class PDF:
 
     def rename(self, newname):
         self.write(newname)
-        os.remove(self.filename)
+        if str(self.filename) != str(newname): 
+            print(f"Renaming {self.filename} -> {newname}")
+            os.remove(self.filename)
         self.filename = newname
 
     def _pdfrwdict_to_dict(self, data:PdfDict):
