@@ -89,7 +89,7 @@ def main():
     ap.add_argument("files", nargs = '*', help="PDF files to operate on")
     ap.add_argument("-a", "--auto", action="store_true", help="auto mode, no manual inputs")
 
-    ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
+    ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}.pdf", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
 
     args = ap.parse_args()
 
