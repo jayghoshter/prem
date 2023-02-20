@@ -3,16 +3,17 @@ import pdfplumber
 import os
 from pikepdf import Pdf, Name
 import re
+from pathlib import Path
 
 class PDF:
     metadata: dict
 
-    def __init__(self, filename=None, engine='pikepdf'):
+    def __init__(self, filename=None, engine='pikepdf', name_template="{year} - {author} - {title}.pdf"):
         self.filename = filename
         self.metadata = {}
         self.pages = None
         self.engine = engine
-        self.name_template = "{year} - {author} - {title}.pdf"
+        self.name_template = name_template
 
         if self.engine == 'pikepdf':
           self.load = self._load_pikepdf
@@ -65,6 +66,7 @@ class PDF:
                 pdf.docinfo[key] = v
             with pdf.open_metadata() as meta:
                 meta.load_from_docinfo(pdf.docinfo)
+            Path(filename).parent.mkdir(parents=True, exist_ok=True)
             pdf.save(filename)
 
     def rename(self, newname=None, name_template=None):

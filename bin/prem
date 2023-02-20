@@ -18,7 +18,7 @@ doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 def driver(fname, **kwargs):
     print(f"Processing: {fname}")
     kwargs = Dict(kwargs)
-    pdf = PDF(fname, engine='pikepdf')
+    pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
     doi_regex_compiled = re.compile(doi_regex)
     dois_in_mdata = doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
     cr = CrossRef()
@@ -90,6 +90,8 @@ def main():
 
     ap.add_argument("files", nargs = '*', help="PDF files to operate on")
     ap.add_argument("-a", "--auto", action="store_true", help="auto mode, no manual inputs")
+
+    ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
 
     args = ap.parse_args()
 
