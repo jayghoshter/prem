@@ -9,9 +9,6 @@ import plumbum
 import click
 from addict import Dict
 from rich import print
-import subprocess 
-import signal
-import os
 
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
