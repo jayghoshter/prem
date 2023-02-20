@@ -1,10 +1,13 @@
-rich
-requests
-addict
-pdfrw
+# dev requirements
 click
+joblib
 pdfplumber
-pyfzf
+pdfrw
 pikepdf>=7.1.0
 plumbum
-joblib
+pyfzf
+requests
+rich
+
+# for tests
+pytest

@@ -1,10 +1,10 @@
 import requests
-from addict import Dict
 import os
 import re
 from joblib import Memory
 from pathlib import Path
 import subprocess
+from collections import defaultdict
 
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
@@ -25,7 +25,7 @@ def fetch_metadata_crossref(doi:str):
         # raise RuntimeError(f"Error fetching data for doi: {doi}")
 
     print("done!")
-    return Dict(response.json()["message"])
+    return defaultdict(str, response.json()["message"])
 
 @memory.cache
 def fetch_bibliography(doi:str):
@@ -41,26 +41,26 @@ def fetch_bibliography(doi:str):
 
     return response.text.strip()
 
-def extract_from_crossref_metadata(mdata:Dict): 
+def extract_from_crossref_metadata(mdata:dict): 
     """
     Extract metadata from given crossref metadata dictionary.
     """
     # TODO: Fix this and clean it up
-    outdict = Dict()
-    outdict.Title = mdata.get('title', ['NoTitle'])[0].replace('/', '-') if mdata.title else 'NoTitle'
-    outdict.Author = mdata.author[0].get('family', ['NoAuthor']) if mdata.author else 'NoAuthor'
+    outdict = defaultdict(str)
+    outdict['Title'] = mdata.get('title', ['NoTitle'])[0].replace('/', '-') if mdata['title'] else 'NoTitle'
+    outdict['Author'] = mdata['author'][0].get('family', ['NoAuthor']) if mdata['author'] else 'NoAuthor'
 
     # TODO: 
-    if mdata.publisher and mdata['container-title']:
-        outdict.Producer = f"{mdata.get('publisher', 'NoPublisher')} - {mdata.get('container-title',['NoJournal'])[0]}"
+    if mdata['publisher'] and mdata['container-title']:
+        outdict['Producer'] = f"{mdata.get('publisher', 'NoPublisher')} - {mdata.get('container-title',['NoJournal'])[0]}"
 
-    outdict.DOI = mdata.DOI if mdata.DOI else None
-    outdict.URL = f'https://doi.org/{mdata.DOI}' if mdata.DOI else None
+    outdict['DOI'] = mdata['DOI'] if mdata['DOI'] else 'NoDOI'
+    outdict['URL'] = f"https://doi.org/{mdata['DOI']}" if mdata['DOI'] else 'NoURL'
 
     # TODO: published-online? published-print? issued?
-    outdict.Year = mdata.issued.get('date-parts', [['NoDate']])[0][0] if mdata.issued['date-parts'] else 'NoDate'
+    outdict['Year'] = mdata['issued'].get('date-parts', [['NoDate']])[0][0] if mdata['issued']['date-parts'] else 'NoDate'
 
-    return outdict.to_dict()
+    return outdict
 
 def find_generic_pdf_opener_linux():
     """

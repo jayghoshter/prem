@@ -1,5 +1,5 @@
 import requests
-from addict import Dict
+from collections import defaultdict
 from prem.utils import fetch_metadata_crossref
 
 class Source:
@@ -22,7 +22,7 @@ class CrossRef(Source):
             print(response)
             raise RuntimeError(f"Error querying for string: {string}")
 
-        result = Dict(response.json()["message"])
+        result = defaultdict(str, response.json()["message"])
 
         return result["items"]
 

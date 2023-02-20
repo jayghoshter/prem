@@ -7,12 +7,12 @@ import re
 from pyfzf.pyfzf import FzfPrompt
 import plumbum
 import click
-from addict import Dict
 from rich import print
+from types import SimpleNamespace
 
 def driver(fname, **kwargs):
     print(f"Processing: {fname}")
-    kwargs = Dict(kwargs)
+    kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
     doi_regex_compiled = re.compile(PDF.doi_regex)
     dois_in_mdata = doi_regex_compiled.findall(" ".join(pdf.metadata.values()))

@@ -4,8 +4,8 @@
 #
 #    pip-compile --output-file=requirements.compiled requirements.txt
 #
-addict==2.4.0
-    # via -r requirements.txt
+attrs==22.2.0
+    # via pytest
 certifi==2022.12.7
     # via requests
 cffi==1.15.1
@@ -22,6 +22,10 @@ deprecation==2.1.0
     # via pikepdf
 idna==3.4
     # via requests
+iniconfig==2.0.0
+    # via pytest
+joblib==1.2.0
+    # via -r requirements.txt
 lxml==4.9.2
     # via pikepdf
 markdown-it-py==2.1.0
@@ -32,6 +36,7 @@ packaging==23.0
     # via
     #   deprecation
     #   pikepdf
+    #   pytest
 pdfminer-six==20221105
     # via pdfplumber
 pdfplumber==0.8.0
@@ -44,6 +49,8 @@ pillow==9.4.0
     # via
     #   pdfplumber
     #   pikepdf
+pluggy==1.0.0
+    # via pytest
 plumbum==1.8.1
     # via -r requirements.txt
 pycparser==2.21
@@ -52,6 +59,8 @@ pyfzf==0.3.1
     # via -r requirements.txt
 pygments==2.14.0
     # via rich
+pytest==7.2.1
+    # via -r requirements.txt
 requests==2.28.2
     # via -r requirements.txt
 rich==13.3.1
