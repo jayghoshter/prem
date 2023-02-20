@@ -37,8 +37,7 @@ def driver(fname, **kwargs):
         mdata = extract_from_crossref_metadata(mdata)
 
         pdf.metadata.update(mdata)
-        outfname = f"{mdata['Year']} - {mdata['Author']} - {mdata['Title']}.pdf"
-        pdf.rename(outfname)
+        pdf.rename()
     else:
         print("  > Couldn't find DOI in file metadata. Looking in text.")
         text = pdf.pages_to_text(3)
@@ -55,8 +54,7 @@ def driver(fname, **kwargs):
             mdata = extract_from_crossref_metadata(mdata)
 
             pdf.metadata.update(mdata)
-            outfname = f"{mdata['Year']} - {mdata['Author']} - {mdata['Title']}.pdf"
-            pdf.rename(outfname)
+            pdf.rename()
 
         elif not kwargs.auto: 
             print(f"  > Couldn't find DOI in pdf text. Manual input required!")
@@ -83,7 +81,7 @@ def driver(fname, **kwargs):
                     selected = selected[0]
                     selected_index = crossref_identifiers.index(selected)
                     pdf.metadata.update( crossref_matches_processed[selected_index] )
-                    pdf.rename(selected + '.pdf')
+                    pdf.rename()
             pdf_process.kill()
 
 def main():

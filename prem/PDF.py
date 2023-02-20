@@ -2,6 +2,7 @@ from pdfrw import PdfReader, PdfWriter, IndirectPdfDict, PdfDict
 import pdfplumber
 import os
 from pikepdf import Pdf, Name
+import re
 
 class PDF:
     metadata: dict
@@ -11,6 +12,7 @@ class PDF:
         self.metadata = {}
         self.pages = None
         self.engine = engine
+        self.name_template = "{year} - {author} - {title}.pdf"
 
         if self.engine == 'pikepdf':
           self.load = self._load_pikepdf
@@ -65,7 +67,9 @@ class PDF:
                 meta.load_from_docinfo(pdf.docinfo)
             pdf.save(filename)
 
-    def rename(self, newname):
+    def rename(self, newname=None, name_template=None):
+        if not newname:
+            newname = self.strtemplate_to_str(name_template)
         self.write(newname)
         if str(self.filename) != str(newname): 
             print(f"Renaming {self.filename} -> {newname}")
@@ -87,3 +91,21 @@ class PDF:
             text = text + page.extract_text()
         pdf.close()
         return text
+
+    def strtemplate_to_str(self, strtemplate = None, mdata = None):
+        """
+        Given string template like strtemplate = "{year} - {author} - {title}", 
+        find the corresponding keys and values in metadata dictionary and build a corresponding string.
+        """
+        if strtemplate is None:
+            strtemplate = self.name_template
+        if mdata is None:
+            mdata = self.metadata
+
+        strtemplate = strtemplate.lower()
+        tags =  re.findall(r'{\w+}', strtemplate)
+        values = list(map(lambda x: mdata[x[1:-1].capitalize()], tags))
+        final_string = strtemplate
+        for t,v in zip(tags, values):
+            final_string = final_string.replace(t, str(v))
+        return final_string
