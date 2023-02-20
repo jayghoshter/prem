@@ -6,6 +6,8 @@ import pdfplumber
 import os
 import re
 from joblib import Memory
+from pathlib import Path
+import subprocess
 
 doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
@@ -125,3 +127,35 @@ def extract_n_pdf_pages(fname, n=1):
         text = text + page.extract_text()
     pdf.close()
     return text
+
+def find_generic_pdf_opener_linux():
+    xdg_query = subprocess.run(['xdg-mime', 'query', 'default', 'application/pdf'], capture_output=True)
+    default_app_xdg_str = xdg_query.stdout.strip().decode()
+
+    HOME=Path(os.environ['HOME'])
+    xdg_user_dir= os.environ.get('XDG_DATA_HOME', None) or str(HOME/'.local/share')
+    xdg_system_dirs = os.environ.get('XDG_DATA_DIRS', '') or '/usr/local/share/:/usr/share/'
+    search_dirs = xdg_system_dirs.split(':')
+    search_dirs.append(xdg_user_dir)
+    search_dirs = map(lambda p: Path(p) / 'applications', search_dirs)
+
+    app_name = None
+
+    for dir in search_dirs: 
+        if dir.exists():
+            files = [ x for x in dir.rglob(default_app_xdg_str) ]
+            if files:
+                desktop_file = files[0]
+                with open(desktop_file, 'r') as fp:
+                    lines = fp.read()
+                    app_name = re.search(r'^Exec\s*=\s*(\w+).*\n', lines, re.MULTILINE)
+                break
+
+    if app_name:
+        return app_name.group(1)
+    else:
+        raise RuntimeError("Could not find default pdf application command!")
+
+def generic_open_linux(fname):
+    app = find_generic_pdf_opener_linux()
+    return subprocess.Popen([app, fname])
