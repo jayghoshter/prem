@@ -35,9 +35,9 @@ def fetch_bibliography(doi:str):
 
     if not response.ok: 
         print(f"Error fetching bibtex for doi: {doi}")
-        return None
+        return ''
 
-    return response.text.strip()
+    return response.text.lstrip()
 
 def extract_from_crossref_metadata(mdata:dict): 
     """

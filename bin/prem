@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from prem import PDF, CrossRef
-from prem.utils import extract_from_crossref_metadata, generic_open_linux
+from prem.utils import extract_from_crossref_metadata, generic_open_linux, fetch_bibliography
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
@@ -96,12 +96,18 @@ def driver(fname, **kwargs):
                 print(f"  > Couldn't find DOI in pdf text. Manual input required!")
                 manual_query(pdf, cr)
 
+    if pdf.metadata.get('DOI'):
+        if kwargs.bib:
+            with open(kwargs.bib, 'a') as bibfile:
+                bibfile.write(fetch_bibliography(pdf.metadata['DOI']))
+
 def main():
 
     ap = argparse.ArgumentParser()
 
     ap.add_argument("files", nargs = '*', help="PDF files to operate on")
     ap.add_argument("-a", "--auto", action="store_true", help="auto mode, no manual inputs")
+    ap.add_argument("-b", "--bib", nargs='?', const='ref.bib', help="Download bibtex citation info into [ref.bib or provided file]")
 
     ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}.pdf", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
 
