@@ -1,6 +1,6 @@
 # prem
 
-**WORK IN PROGRESS**
+**WORK IN PROGRESS**: This is alpha code. Please backup your data before using this on your pdfs.
 
 Pdf REference Manager: Simple PDF file based CLI reference management. Prem means love in some Indian languages.
 
