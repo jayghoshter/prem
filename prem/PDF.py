@@ -8,6 +8,7 @@ from pathlib import Path
 class PDF:
     metadata: dict
     doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
+    doi_regex_compiled = re.compile(doi_regex)
 
     def __init__(self, filename=None, engine='pikepdf', name_template="{year} - {author} - {title}.pdf"):
         self.filename = filename

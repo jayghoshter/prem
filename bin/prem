@@ -14,8 +14,7 @@ def driver(fname, **kwargs):
     print(f"Processing: {fname}")
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
-    doi_regex_compiled = re.compile(PDF.doi_regex)
-    dois_in_mdata = doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
+    dois_in_mdata = PDF.doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
     cr = CrossRef()
 
     fzf = FzfPrompt()
@@ -36,7 +35,7 @@ def driver(fname, **kwargs):
     else:
         print("  > Couldn't find DOI in file metadata. Looking in text.")
         text = pdf.pages_to_text(3)
-        dois_in_text = doi_regex_compiled.findall(text)
+        dois_in_text = PDF.doi_regex_compiled.findall(text)
 
         if dois_in_text:
             doi = dois_in_text[0]
