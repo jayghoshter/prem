@@ -20,10 +20,10 @@ def fetch_metadata_crossref(doi:str):
 
     if not response.ok: 
         print(f"Error fetching data for doi: {doi}")
-        return None
+        return {}
         # raise RuntimeError(f"Error fetching data for doi: {doi}")
 
-    return defaultdict(str, response.json()["message"])
+    return response.json()["message"]
 
 @memory.cache
 def fetch_bibliography(doi:str):

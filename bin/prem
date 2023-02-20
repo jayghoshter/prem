@@ -121,13 +121,22 @@ def main():
     ap.add_argument("files", nargs = '*', help="PDF files to operate on")
     ap.add_argument("-a", "--auto", action="store_true", help="auto mode, no manual inputs")
     ap.add_argument("-b", "--bib", nargs='?', const='ref.bib', help="Download bibtex citation info into [ref.bib or provided file]")
+    ap.add_argument("-d", "--doi", help="Use provided DOI to fetch metadata and modify pdf")
 
     ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}.pdf", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
 
     args = ap.parse_args()
 
-    for current_file in args.files: 
-        driver(current_file, **vars(args))
+    if args.doi:
+        assert len(args.files) == 1
+        mdata = CrossRef().fetch_by_doi(args.doi)
+        pdf = PDF(args.files[0], engine='pikepdf', name_template=args.name_template)
+        mdata = extract_from_crossref_metadata(mdata)
+        pdf.metadata.update(mdata)
+        pdf.rename()
+    else: 
+        for current_file in args.files: 
+            driver(current_file, **vars(args))
 
 if __name__ == "__main__": 
     main()
