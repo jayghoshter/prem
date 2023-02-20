@@ -10,77 +10,91 @@ import click
 from rich import print
 from types import SimpleNamespace
 
-def driver(fname, **kwargs):
-    print(f"Processing: {fname}")
-    kwargs = SimpleNamespace(**kwargs)
-    pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
+def check_doi_in_metadata(pdf, source):
     dois_in_mdata = PDF.doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
-    cr = CrossRef()
 
-    fzf = FzfPrompt()
-    FZF_FILE_OPTS =  '--cycle --bind="ctrl-x:execute@xdg-open {}@" --bind="ctrl-y:execute@echo {} | xclip -i -selection clipboard@"'
-    
     if dois_in_mdata: 
         doi = dois_in_mdata[0]
         print(f"  > Found DOI: {doi} in file metadata")
 
-        mdata = cr.fetch_by_doi(doi)
+        mdata = source.fetch_by_doi(doi)
         if not mdata:
-            print(f"  > Error fetching metadata from {cr.__class__.__name__}")
+            print(f"  > Error fetching metadata from {source.__class__.__name__}")
             return 
-        print(f"  > Fetched metadata from {cr.__class__.__name__} or local cache")
+        print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
 
         mdata = extract_from_crossref_metadata(mdata)
         pdf.metadata.update(mdata)
         pdf.rename()
 
-    else:
-        print("  > Couldn't find DOI in file metadata. Looking in text.")
-        text = pdf.pages_to_text(3)
-        dois_in_text = PDF.doi_regex_compiled.findall(text)
+        return True
+    return False
 
-        if dois_in_text:
-            doi = dois_in_text[0]
-            print(f"  > Found DOI: {doi} in pdf text")
+def check_doi_in_text(pdf, source):
+    text = pdf.pages_to_text(3)
+    dois_in_text = PDF.doi_regex_compiled.findall(text)
 
-            mdata = cr.fetch_by_doi(doi)
-            if not mdata: 
-                print(f"  > Error fetching metadata from {cr.__class__.__name__}")
-                return 
-            print(f"  > Fetched metadata from {cr.__class__.__name__} or local cache")
+    if dois_in_text:
+        doi = dois_in_text[0]
+        print(f"  > Found DOI: {doi} in pdf text")
 
-            mdata = extract_from_crossref_metadata(mdata)
-            pdf.metadata.update(mdata)
-            pdf.rename()
+        mdata = source.fetch_by_doi(doi)
+        if not mdata: 
+            print(f"  > Error fetching metadata from {source.__class__.__name__}")
+            return False
+        print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
 
-        elif not kwargs.auto: 
-            print(f"  > Couldn't find DOI in pdf text. Manual input required!")
-            # TODO: Make generic
-            header = """
+        mdata = extract_from_crossref_metadata(mdata)
+        pdf.metadata.update(mdata)
+        pdf.rename()
+        return True
+
+    return False
+
+def manual_query(pdf, source):
+    fzf = FzfPrompt()
+    FZF_FILE_OPTS =  '--cycle --bind="ctrl-x:execute@xdg-open {}@" --bind="ctrl-y:execute@echo {} | xclip -i -selection clipboard@"'
+
+    header = """
 # Manual query mode. 
 # Please input the query text for crossref. It may be a partial title with or without author names.
 # Only 120 characters from the first line are used in the query.
 # The text extracted from the PDF follows for reference.
 
-            """
-            pdf_process = generic_open_linux(fname)
-            querystr = click.edit(header + text)
-            if querystr: 
-                querystr = querystr.split('\n')[0]
-                querystr = querystr.encode('ascii', 'ignore')
-                querystr = re.sub(r'[\-:\.\?,\s]+', '+', str(querystr))
-                if len(querystr) > 120:
-                    querystr = querystr[:120]
-                crossref_matches = cr.query(querystr)
-                crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
-                crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
-                selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
-                if selected:
-                    selected = selected[0]
-                    selected_index = crossref_identifiers.index(selected)
-                    pdf.metadata.update( crossref_matches_processed[selected_index] )
-                    pdf.rename()
-            pdf_process.kill()
+    """
+    text = pdf.pages_to_text(3)
+    pdf_process = generic_open_linux(pdf.filename)
+    querystr = click.edit(header + text)
+    if querystr: 
+        querystr = querystr.split('\n')[0]
+        querystr = querystr.encode('ascii', 'ignore')
+        querystr = re.sub(r'[\-:\.\?,\s]+', '+', str(querystr))
+        if len(querystr) > 120:
+            querystr = querystr[:120]
+        crossref_matches = source.query(querystr)
+        crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
+        crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
+        selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
+        if selected:
+            selected = selected[0]
+            selected_index = crossref_identifiers.index(selected)
+            pdf.metadata.update( crossref_matches_processed[selected_index] )
+            pdf.rename()
+    pdf_process.kill()
+
+def driver(fname, **kwargs):
+    print(f"Processing: {fname}")
+    kwargs = SimpleNamespace(**kwargs)
+    pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
+    cr = CrossRef()
+
+    print("  > Looking for DOI in file metadata.")
+    if not check_doi_in_metadata(pdf, cr):
+        print("  > Couldn't find DOI in file metadata. Looking in text.")
+        if not check_doi_in_text(pdf, cr):
+            if not kwargs.auto: 
+                print(f"  > Couldn't find DOI in pdf text. Manual input required!")
+                manual_query(pdf, cr)
 
 def main():
 
