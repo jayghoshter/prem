@@ -63,7 +63,7 @@ def driver(fname, **kwargs):
             pdf_process = generic_open_linux(fname)
             querystr = click.edit(header + text)
             if querystr: 
-                querystr = querystr.split()[0]
+                querystr = querystr.split('\n')[0]
                 querystr = querystr.encode('ascii', 'ignore')
                 querystr = re.sub(r'[\-:\.\?,\s]+', '+', str(querystr))
                 if len(querystr) > 120:
