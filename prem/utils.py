@@ -99,15 +99,23 @@ def get_doi_from_pdf_metadata(fname):
 def unicode_normalize(s):
     return unicodedata.normalize('NFKD', s).encode('ascii', 'ignore')
 
-def extract_from_crossref_metadata(mdata:dict): 
-    return {
-        'Title' : mdata["title"][0].replace('/', '-') if "title" in mdata.keys() else '',
-        'Author': mdata["author"][0]["family"] if "author" in mdata.keys() else '',
-        'Producer': f'{mdata["publisher"]} - {mdata["container-title"][0]}' if "publisher" in mdata.keys() and "container-title" in mdata.keys() else '',
-        'DOI': mdata["DOI"] if "DOI" in mdata.keys() else '',
-        'URL': f'https://doi.org/{mdata["DOI"]}' if "DOI" in mdata.keys() else '',
-        'Year': mdata["issued"]["date-parts"][0][0] if "issued" in mdata.keys() else '',
-    }
+def extract_from_crossref_metadata(mdata:Dict): 
+    # TODO: Fix this and clean it up
+    outdict = Dict()
+    outdict.Title = mdata.get('title', ['NoTitle'])[0].replace('/', '-') if mdata.title else 'NoTitle'
+    outdict.Author = mdata.author[0].get('family', ['NoAuthor']) if mdata.author else 'NoAuthor'
+
+    # TODO: 
+    if mdata.publisher and mdata['container-title']:
+        outdict.Producer = f"{mdata.get('publisher', 'NoPublisher')} - {mdata.get('container-title',['NoJournal'])[0]}"
+
+    outdict.DOI = mdata.DOI if mdata.DOI else None
+    outdict.URL = f'https://doi.org/{mdata.DOI}' if mdata.DOI else None
+
+    # TODO: published-online? published-print? issued?
+    outdict.Year = mdata.issued.get('date-parts', [['NoDate']])[0][0] if mdata.issued['date-parts'] else 'NoDate'
+
+    return outdict.to_dict()
 
 def extract_n_pdf_pages(fname, n=1):
     pdf = pdfplumber.open(fname)
