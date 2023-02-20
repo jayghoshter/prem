@@ -59,13 +59,14 @@ def driver(fname, **kwargs):
             header = """
 # Manual query mode. 
 # Please input the query text for crossref. It may be a partial title with or without author names.
-# Please delete all unnecessary text and try to keep it ASCII (alnum) friendly.
-# The text extracted from the PDF follows.
+# Only 120 characters from the first line are used in the query.
+# The text extracted from the PDF follows for reference.
 
             """
             pdf_process = generic_open_linux(fname)
             querystr = click.edit(header + text)
             if querystr: 
+                querystr = querystr.split()[0]
                 querystr = querystr.encode('ascii', 'ignore')
                 querystr = re.sub(r'[\-:\.\?,\s]+', '+', str(querystr))
                 if len(querystr) > 120:
