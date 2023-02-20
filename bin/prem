@@ -23,15 +23,17 @@ def driver(fname, **kwargs):
     if dois_in_mdata: 
         doi = dois_in_mdata[0]
         print(f"  > Found DOI: {doi} in file metadata")
-        mdata = cr.fetch_by_doi(doi)
 
+        mdata = cr.fetch_by_doi(doi)
         if not mdata:
+            print(f"  > Error fetching metadata from {cr.__class__.__name__}")
             return 
+        print(f"  > Fetched metadata from {cr.__class__.__name__} or local cache")
 
         mdata = extract_from_crossref_metadata(mdata)
-
         pdf.metadata.update(mdata)
         pdf.rename()
+
     else:
         print("  > Couldn't find DOI in file metadata. Looking in text.")
         text = pdf.pages_to_text(3)
@@ -39,14 +41,15 @@ def driver(fname, **kwargs):
 
         if dois_in_text:
             doi = dois_in_text[0]
-            print(f"  > Found DOI: {doi} in file metadata")
-            mdata = cr.fetch_by_doi(doi)
+            print(f"  > Found DOI: {doi} in pdf text")
 
+            mdata = cr.fetch_by_doi(doi)
             if not mdata: 
+                print(f"  > Error fetching metadata from {cr.__class__.__name__}")
                 return 
+            print(f"  > Fetched metadata from {cr.__class__.__name__} or local cache")
 
             mdata = extract_from_crossref_metadata(mdata)
-
             pdf.metadata.update(mdata)
             pdf.rename()
 
