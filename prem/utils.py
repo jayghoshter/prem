@@ -36,6 +36,17 @@ def fetch_metadata_crossref(doi:str):
         print("done!")
         return Dict(response.json()["message"])
 
+@memory.cache
+def fetch_bibliography(doi:str):
+    header = {'Accept': 'text/bibliography; style=bibtex'}
+    response = requests.get(f"https://dx.doi.org/{doi}", headers=header)
+
+    if not response.ok: 
+        print(f"Error fetching bibtex for doi: {doi}")
+        return None
+
+    return response.text.strip()
+
 def query_title(string:str, base_url="https://api.crossref.org/works?query=") :
     """ Given a title string, return search results """
     response = requests.get(base_url + string)
