@@ -21,7 +21,7 @@ def input_with_prefill(prompt, text):
     return result
 
 def check_doi_in_metadata(pdf, source):
-    dois_in_mdata = PDF.doi_regex_compiled.findall(" ".join(pdf.metadata.values()))
+    dois_in_mdata = pdf.find_in_metadata(PDF.doi_regex)
 
     if dois_in_mdata: 
         doi = dois_in_mdata[0]
@@ -34,7 +34,7 @@ def check_doi_in_metadata(pdf, source):
         print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
 
         mdata = source.extract(mdata)
-        pdf.metadata.update(mdata)
+        pdf.update_metadata(mdata)
         pdf.rename()
 
         return True
@@ -58,7 +58,7 @@ def check_doi_in_text(pdf, source, auto=False):
         print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
 
         mdata = source.extract(mdata)
-        pdf.metadata.update(mdata)
+        pdf.update_metadata(mdata)
         pdf.rename()
         return True
 
@@ -91,14 +91,14 @@ def manual_query(pdf, source):
         if selected:
             selected = selected[0]
             selected_index = crossref_identifiers.index(selected)
-            pdf.metadata.update( crossref_matches_processed[selected_index] )
+            pdf.update_metadata( crossref_matches_processed[selected_index] )
             pdf.rename()
     pdf_process.kill()
 
 def driver(fname, **kwargs):
     print(f"Processing: {fname}")
     kwargs = SimpleNamespace(**kwargs)
-    pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
+    pdf = PDF(fname, name_template=kwargs.name_template)
     source = CrossRef
 
     print("  > Looking for DOI in file metadata.")
@@ -130,7 +130,7 @@ def main():
     if args.doi:
         assert len(args.files) == 1
         mdata = CrossRef.fetch_by_doi(args.doi)
-        pdf = PDF(args.files[0], engine='pikepdf', name_template=args.name_template)
+        pdf = PDF(args.files[0], name_template=args.name_template)
         mdata = CrossRef.extract(mdata)
         pdf.metadata.update(mdata)
         pdf.rename()

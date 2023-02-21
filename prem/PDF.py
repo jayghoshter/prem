@@ -1,4 +1,3 @@
-from pdfrw import PdfReader, PdfWriter, IndirectPdfDict, PdfDict
 import pdfplumber
 import os
 from pikepdf import Pdf, Name
@@ -6,71 +5,57 @@ import re
 from pathlib import Path
 
 class PDF:
-    metadata: dict
-    doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
+    doi_regex = r'10\.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
     doi_regex_compiled = re.compile(doi_regex)
 
-    def __init__(self, filename=None, engine='pikepdf', name_template="{year} - {author} - {title}.pdf"):
+    filename: str
+    name_template:str
+
+
+    def __init__(self, filename=None, name_template="{year} - {author} - {title}.pdf"):
         self.filename = filename
         self.metadata = {}
         self.pages = None
-        self.engine = engine
         self.name_template = name_template
-
-        if self.engine == 'pikepdf':
-          self.load = self._load_pikepdf
-          self.write = self._write_pikepdf
-        elif self.engine == 'pdfrw':
-          self.load = self._load_pdfrw
-          self.write = self._write_pdfrw
-        else:
-          raise ValueError(self.engine)
-
+        self.pdf = None
 
         self.load()
 
-    def _load_pdfrw(self, filename=None):
+    def __del__(self):
+        self.unload()
+
+    def load(self, filename=None):
         filename = filename if filename else self.filename
 
         if not filename:
             return
 
-        reader = PdfReader(filename)
-        self.metadata = self._pdfrwdict_to_dict(reader.Info)
-        self.pages = reader.pages
+        self.pdf = Pdf.open(filename, allow_overwriting_input=True)
+        self.metadata = self.pdf.open_metadata()
+        self.metadata._updating = True
+        self.metadata.register_xml_namespace('https://github.com/jayghoshter/prem', 'prem')
+        self.pages = self.pdf.pages
 
-    def _load_pikepdf(self, filename=None):
-        filename = filename if filename else self.filename
+        # Fix for malformed XML metadata
+        try: 
+            for k,v in self.metadata.items():
+                pass
+        except KeyError as e: 
+            from lxml import etree as ET
+            root = ET.fromstring(str(self.metadata))
+            out = root.find(f'.//{e.args[0]}')
+            outp = out.getparent()
+            outp.remove(out)
+            self.metadata._load_from(bytes(ET.tostring(root)))
 
-        if not filename:
-            return
+    def update_metadata(self, indict):
+        self.metadata.update(indict)
+        self.metadata._apply_changes()
 
-        with Pdf.open(filename) as pdf:
-            try:
-                self.metadata = {f"{str(k)[1:]}": str(v) for k,v in pdf.docinfo.items()}
-            except Exception as e:
-                print(f"ERROR: Unknown error reading pdf metadata (docinfo) for file {filename}.")
-                print(f"{e.__class__.__name__}: {e}")
-            self.pages = pdf.pages
-
-    def _write_pdfrw(self, filename=None):
-        filename = filename if filename else self.filename
-
-        writer = PdfWriter()
-        writer.addpages(self.pages)
-        writer.trailer.Info = IndirectPdfDict(**self.metadata)
-        writer.write(filename)
-
-    def _write_pikepdf(self, filename=None):
-        with Pdf.open(self.filename, allow_overwriting_input=True) as pdf:
-            for k,v in self.metadata.items(): 
-                key = f"/{k}"
-                pdf.docinfo[key] = v
-            with pdf.open_metadata() as meta:
-                meta.load_from_docinfo(pdf.docinfo)
-            if filename: 
-                Path(filename).parent.mkdir(parents=True, exist_ok=True)
-            pdf.save(filename)
+    def write(self, filename=None):
+        if filename: 
+            Path(filename).parent.mkdir(parents=True, exist_ok=True)
+        self.pdf.save(filename)
 
     def rename(self, newname=None, name_template=None):
         if not newname:
@@ -81,19 +66,33 @@ class PDF:
             os.remove(self.filename)
         self.filename = newname
 
-    def _pdfrwdict_to_dict(self, data:PdfDict):
-        return { k[1:] : str(v)[1:-1].replace('\\', '') for k,v in data.items() }
+    def find_in_metadata(self, pattern, flags=0):
+        compiled_pattern = re.compile(pattern, flags)
+        matches = []
+        for k,v in self.metadata.items():
+            if isinstance(v, str):
+                res = compiled_pattern.findall(v)
+            elif isinstance(v, list) or isinstance(v, set):
+                res = compiled_pattern.findall(" ".join(str(v)))
+            elif v is None:
+                pass
+            else:
+                raise RuntimeError(f"Unknown metadata value type!\n{k}: {v} => {type(v)}")
+            matches.extend(res)
+        return matches
 
     def unload(self):
         self.metadata = {}
         self.pages = None
+        if self.pdf:
+            self.pdf.close()
 
     def pages_to_text(self, n=None):
         pdf = pdfplumber.open(self.filename)
         pages = pdf.pages[:n]
         text = ''
         for page in pages:
-            text = text + page.extract_text()
+            text = text + '\n' +  page.extract_text()
         pdf.close()
         return text
 
@@ -109,7 +108,7 @@ class PDF:
 
         strtemplate = strtemplate.lower()
         tags =  re.findall(r'{\w+}', strtemplate)
-        values = list(map(lambda x: mdata[x[1:-1].capitalize()], tags))
+        values = list(map(lambda x: mdata['prem:' + x[1:-1]], tags))
         final_string = strtemplate
         for t,v in zip(tags, values):
             final_string = final_string.replace(t, str(v))

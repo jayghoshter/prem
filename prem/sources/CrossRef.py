@@ -39,20 +39,40 @@ def extract(mdata:dict):
     """
     Extract metadata from given crossref metadata dictionary.
     """
-    outdict = defaultdict(str)
+    out = defaultdict(str)
     mdata = defaultdict(str, mdata)
 
-    outdict['Title'] = mdata.get('title', ['NoTitle'])[0].replace('/', '-') if mdata['title'] else 'NoTitle'
-    outdict['Author'] = mdata['author'][0].get('family', ['NoAuthor']) if mdata['author'] else 'NoAuthor'
+    try: 
+        out['dc:format'] = 'application/pdf'
+        out['dc:identifier'] = f"doi:{mdata['DOI']}"
+        out['dc:title'] = mdata['title'][0].replace('/', ' ')
+        out['dc:creator'] = list(map(lambda a: f"{a.get('given')} {a.get('family')}" , mdata['author']))
+        out['dc:subject'] = set(mdata['subject'])
+        out['dc:description'] = f"{mdata['container-title'][0]}, {mdata['volume']} ({mdata['issued']['date-parts'][0][0]}) {mdata['page']}"
+        out['dc:publisher'] = set(mdata['publisher'])
 
-    # TODO: 
-    if mdata['publisher'] and mdata['container-title']:
-        outdict['Producer'] = f"{mdata.get('publisher', 'NoPublisher')} - {mdata.get('container-title',['NoJournal'])[0]}"
+        out['prism3:publicationName'] = mdata['container-title'][0]
+        out['prism3:aggregationType'] = mdata['type']
+        # out['prism3:copyright'] = mdata['assertion']...
+        out['prism3:issn'] = mdata['ISSN'][0] if mdata['ISSN'] else ''
+        out['prism3:volume'] = mdata['volume']
+        out['prism3:pageRange'] = mdata['page']
+        out['prism3:startingPage'] = mdata['page']
+        out['prism3:doi'] = mdata['DOI']
+        out['prism3:url'] = mdata['URL']
+        out['prism3:coverDisplayDate'] = "-".join(str(mdata['issued']['date-parts'][0]))
 
-    outdict['DOI'] = mdata['DOI'] if mdata['DOI'] else 'NoDOI'
-    outdict['URL'] = f"https://doi.org/{mdata['DOI']}" if mdata['DOI'] else 'NoURL'
+        out['crossmark:DOI'] = mdata['DOI']
+        out['pdfx:doi'] = mdata['DOI']
+        out['pdfx:CrossMarkDomains'] = mdata['content-domain']['domain']
 
-    # TODO: published-online? published-print? issued?
-    outdict['Year'] = mdata['issued'].get('date-parts', [['NoDate']])[0][0] if mdata['issued']['date-parts'] else 'NoDate'
+        out['prem:author'] = next(filter(lambda x: x['sequence'] == 'first', mdata['author']))['family']
+        out['prem:title'] = mdata['title'][0].replace('/', ' ')
+        out['prem:year'] = str(mdata['issued']['date-parts'][0][0])
+    except:
+        with open('prem.dump', 'w') as dumpfile:
+            import json
+            json.dump(mdata, dumpfile, indent=2)
+        raise RuntimeError("Error with accessing some tags in crossref metadata")
 
-    return outdict
+    return out
