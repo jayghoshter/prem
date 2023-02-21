@@ -4,26 +4,9 @@ import re
 from joblib import Memory
 from pathlib import Path
 import subprocess
-from collections import defaultdict
-
-doi_regex = r'10.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
 memory = Memory(location=CACHE_DIR, verbose=0)
-
-@memory.cache
-def fetch_metadata_crossref(doi:str):
-    """
-    Fetch metadata for a given DOI from CrossRef
-    """
-    response = requests.get(f"https://api.crossref.org/works/{doi}")
-
-    if not response.ok: 
-        print(f"Error fetching data for doi: {doi}")
-        return {}
-        # raise RuntimeError(f"Error fetching data for doi: {doi}")
-
-    return response.json()["message"]
 
 @memory.cache
 def fetch_bibliography(doi:str):
@@ -39,27 +22,6 @@ def fetch_bibliography(doi:str):
 
     return response.text.lstrip()
 
-def extract_from_crossref_metadata(mdata:dict): 
-    """
-    Extract metadata from given crossref metadata dictionary.
-    """
-    outdict = defaultdict(str)
-    mdata = defaultdict(str, mdata)
-
-    outdict['Title'] = mdata.get('title', ['NoTitle'])[0].replace('/', '-') if mdata['title'] else 'NoTitle'
-    outdict['Author'] = mdata['author'][0].get('family', ['NoAuthor']) if mdata['author'] else 'NoAuthor'
-
-    # TODO: 
-    if mdata['publisher'] and mdata['container-title']:
-        outdict['Producer'] = f"{mdata.get('publisher', 'NoPublisher')} - {mdata.get('container-title',['NoJournal'])[0]}"
-
-    outdict['DOI'] = mdata['DOI'] if mdata['DOI'] else 'NoDOI'
-    outdict['URL'] = f"https://doi.org/{mdata['DOI']}" if mdata['DOI'] else 'NoURL'
-
-    # TODO: published-online? published-print? issued?
-    outdict['Year'] = mdata['issued'].get('date-parts', [['NoDate']])[0][0] if mdata['issued']['date-parts'] else 'NoDate'
-
-    return outdict
 
 def find_generic_pdf_opener_linux():
     """

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from prem import PDF, CrossRef
-from prem.utils import extract_from_crossref_metadata, generic_open_linux, fetch_bibliography
+from prem.utils import generic_open_linux, fetch_bibliography
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
@@ -33,7 +33,7 @@ def check_doi_in_metadata(pdf, source):
             return 
         print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
 
-        mdata = extract_from_crossref_metadata(mdata)
+        mdata = source.extract(mdata)
         pdf.metadata.update(mdata)
         pdf.rename()
 
@@ -57,7 +57,7 @@ def check_doi_in_text(pdf, source, auto=False):
             return False
         print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
 
-        mdata = extract_from_crossref_metadata(mdata)
+        mdata = source.extract(mdata)
         pdf.metadata.update(mdata)
         pdf.rename()
         return True
@@ -85,7 +85,7 @@ def manual_query(pdf, source):
         if len(querystr) > 120:
             querystr = querystr[:120]
         crossref_matches = source.query(querystr)
-        crossref_matches_processed = list(map(extract_from_crossref_metadata, crossref_matches))
+        crossref_matches_processed = list(map(source.extract, crossref_matches))
         crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
         selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
         if selected:
@@ -99,15 +99,15 @@ def driver(fname, **kwargs):
     print(f"Processing: {fname}")
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, engine='pikepdf', name_template=kwargs.name_template)
-    cr = CrossRef()
+    source = CrossRef
 
     print("  > Looking for DOI in file metadata.")
-    if not check_doi_in_metadata(pdf, cr):
+    if not check_doi_in_metadata(pdf, source):
         print("  > Couldn't find DOI in file metadata. Looking in text.")
-        if not check_doi_in_text(pdf, cr, kwargs.auto):
+        if not check_doi_in_text(pdf, source, kwargs.auto):
             if not kwargs.auto: 
                 print(f"  > Couldn't find DOI in pdf text. Manual input required!")
-                manual_query(pdf, cr)
+                manual_query(pdf, source)
 
     if pdf.metadata.get('DOI'):
         if kwargs.bib:
@@ -129,9 +129,9 @@ def main():
 
     if args.doi:
         assert len(args.files) == 1
-        mdata = CrossRef().fetch_by_doi(args.doi)
+        mdata = CrossRef.fetch_by_doi(args.doi)
         pdf = PDF(args.files[0], engine='pikepdf', name_template=args.name_template)
-        mdata = extract_from_crossref_metadata(mdata)
+        mdata = CrossRef.extract(mdata)
         pdf.metadata.update(mdata)
         pdf.rename()
     else: 
