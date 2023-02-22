@@ -2,6 +2,7 @@ import requests
 from collections import defaultdict
 from joblib import Memory
 import os
+from prem.utils import string_sanitizer
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
 memory = Memory(location=CACHE_DIR, verbose=0)
@@ -54,9 +55,11 @@ def parse(mdata:dict):
     mdata = defaultdict(str, mdata)
 
     try: 
+        title = string_sanitizer(mdata['title'][0])
+
         out['dc:format'] = 'application/pdf'
         out['dc:identifier'] = f"doi:{mdata['DOI']}"
-        out['dc:title'] = mdata['title'][0].replace('/', ' ')
+        out['dc:title'] = title
         out['dc:creator'] = list(map(lambda a: f"{a.get('given')} {a.get('family')}" , mdata['author']))
         out['dc:subject'] = set(mdata['subject'])
         out['dc:description'] = f"{mdata['container-title'][0]}, {mdata['volume']} ({mdata['issued']['date-parts'][0][0]}) {mdata['page']}"
@@ -78,7 +81,7 @@ def parse(mdata:dict):
         out['pdfx:CrossMarkDomains'] = mdata['content-domain']['domain']
 
         out['prem:author'] = next(filter(lambda x: x['sequence'] == 'first', mdata['author']))['family']
-        out['prem:title'] = mdata['title'][0].replace('/', ' ')
+        out['prem:title'] = title
         out['prem:year'] = str(mdata['issued']['date-parts'][0][0])
     except:
         with open('prem.dump', 'w') as dumpfile:
