@@ -27,17 +27,12 @@ def check_doi_in_metadata(pdf, source):
         doi = dois_in_mdata[0]
         print(f"  > Found DOI: {doi} in file metadata")
 
-        mdata = source.fetch_by_doi(doi)
-        if not mdata:
-            print(f"  > Error fetching metadata from {source.__class__.__name__}")
-            return 
-        print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
+        mdata = source.fetch_and_parse(doi)
 
-        mdata = source.extract(mdata)
-        pdf.update_metadata(mdata)
-        pdf.rename()
-
-        return True
+        if mdata:
+            pdf.update_metadata(mdata)
+            pdf.rename()
+            return True
     return False
 
 def check_doi_in_text(pdf, source, auto=False):
@@ -51,16 +46,12 @@ def check_doi_in_text(pdf, source, auto=False):
         if not auto:
             doi = input_with_prefill("Correct DOI: ", doi)
 
-        mdata = source.fetch_by_doi(doi)
-        if not mdata: 
-            print(f"  > Error fetching metadata from {source.__class__.__name__}")
-            return False
-        print(f"  > Fetched metadata from {source.__class__.__name__} or local cache")
+        mdata = source.fetch_and_parse(doi)
 
-        mdata = source.extract(mdata)
-        pdf.update_metadata(mdata)
-        pdf.rename()
-        return True
+        if mdata: 
+            pdf.update_metadata(mdata)
+            pdf.rename()
+            return True
 
     return False
 
@@ -85,7 +76,7 @@ def manual_query(pdf, source):
         if len(querystr) > 120:
             querystr = querystr[:120]
         crossref_matches = source.query(querystr)
-        crossref_matches_processed = list(map(source.extract, crossref_matches))
+        crossref_matches_processed = list(map(source.parse, crossref_matches))
         crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
         selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
         if selected:
@@ -129,11 +120,11 @@ def main():
 
     if args.doi:
         assert len(args.files) == 1
-        mdata = CrossRef.fetch_by_doi(args.doi)
         pdf = PDF(args.files[0], name_template=args.name_template)
-        mdata = CrossRef.extract(mdata)
-        pdf.metadata.update(mdata)
-        pdf.rename()
+        mdata = CrossRef.fetch_and_parse(args.doi)
+        if mdata: 
+            pdf.update_metadata(mdata)
+            pdf.rename()
     else: 
         for current_file in args.files: 
             driver(current_file, **vars(args))

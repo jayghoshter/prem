@@ -23,6 +23,17 @@ def fetch_metadata_crossref(doi:str):
 def fetch_by_doi(doi:str):
     return fetch_metadata_crossref(doi)
 
+def fetch_and_parse(doi:str):
+    module_name = __name__.split('.')[-1]
+
+    mdata = fetch_by_doi(doi)
+    if not mdata:
+        print(f"  > Error fetching metadata from {module_name}")
+        return defaultdict(str)
+    print(f"  > Fetched metadata from {module_name} or local cache")
+
+    return parse(mdata)
+
 def query(string):
     """ Given a title string, return search results """
     response = requests.get(f"https://api.crossref.org/works?query={string}")
@@ -35,7 +46,7 @@ def query(string):
 
     return result["items"]
 
-def extract(mdata:dict): 
+def parse(mdata:dict): 
     """
     Extract metadata from given crossref metadata dictionary.
     """
@@ -76,3 +87,4 @@ def extract(mdata:dict):
         raise RuntimeError("Error with accessing some tags in crossref metadata")
 
     return out
+
