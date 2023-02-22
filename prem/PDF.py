@@ -113,6 +113,23 @@ class PDF:
         pdf.close()
         return text
 
+    def find_in_text(self, pattern, flags=0, n_pages=3, mod=None):
+        if isinstance(pattern, str):
+            compiled_pattern = re.compile(pattern, flags)
+        elif isinstance(pattern, re.Pattern):
+            compiled_pattern = pattern
+        else:
+            raise TypeError("Bad pattern object")
+
+        text = self.pages_to_text(n_pages)
+
+        # Apply a modification to the text
+        if mod:
+            text = mod(text)
+
+        return compiled_pattern.findall(text)
+
+
     def strtemplate_to_str(self, strtemplate = None, mdata = None):
         """
         Given string template like strtemplate = "{year} - {author} - {title}", 
