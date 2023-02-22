@@ -66,6 +66,17 @@ class PDF:
             os.remove(self.filename)
         self.filename = newname
 
+    def match_metadata_fields(self, key, flags=0):
+        pattern = "{.*}" + key
+        compiled_pattern = re.compile(pattern)
+
+        matches = {}
+        for k in self.metadata.keys():
+            if compiled_pattern.fullmatch(k):
+                matches.update({k : self.metadata[k]})
+
+        return matches
+
     def find_in_metadata(self, pattern, flags=0):
         compiled_pattern = re.compile(pattern, flags)
         matches = []
