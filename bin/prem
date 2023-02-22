@@ -100,10 +100,10 @@ def driver(fname, **kwargs):
                 print(f"  > Couldn't find DOI in pdf text. Manual input required!")
                 manual_query(pdf, source)
 
-    if pdf.metadata.get('DOI'):
-        if kwargs.bib:
+    if dois := pdf.match_metadata_fields('doi'):
+        if kwargs.bib and dois:
             with open(kwargs.bib, 'a') as bibfile:
-                bibfile.write(fetch_bibliography(pdf.metadata['DOI']))
+                bibfile.write(fetch_bibliography(list(dois.values())[0]))
 
 def main():
 
