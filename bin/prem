@@ -37,8 +37,13 @@ def check_doi_in_metadata(pdf, source):
     return False
 
 def check_doi_in_text(pdf, source, auto=False):
-    text = pdf.pages_to_text(3)
-    dois_in_text = source.identifier_regex_compiled.findall(text)
+
+    mod = None
+    # PDFPlumber reverses arXiv:<id> when parsing the text
+    if source.__name__.split('.')[-1] == 'arXiv':
+        mod = lambda x: x[::-1]
+
+    dois_in_text = pdf.find_in_text(source.identifier_regex, mod=mod)
 
     if dois_in_text:
         doi = dois_in_text[0]
