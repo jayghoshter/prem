@@ -11,6 +11,7 @@ memory = Memory(location=CACHE_DIR, verbose=0)
 doi_regex = r'10\.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 doi_regex_compiled = re.compile(doi_regex)
 
+identifier_name = 'DOI'
 identifier_regex = doi_regex
 identifier_regex_compiled = doi_regex_compiled
 

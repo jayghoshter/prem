@@ -21,15 +21,15 @@ def input_with_prefill(prompt, text):
     readline.set_pre_input_hook()
     return result
 
-def check_doi_in_metadata(pdf, sources):
+def check_id_in_metadata(pdf, sources):
     for source in sources: 
-        dois_in_mdata = pdf.find_in_metadata(source.identifier_regex_compiled)
+        ids_in_mdata = pdf.find_in_metadata(source.identifier_regex_compiled)
 
-        if dois_in_mdata: 
-            doi = dois_in_mdata[0]
-            print(f"  > Found DOI: {doi} in file metadata")
+        if ids_in_mdata: 
+            id = ids_in_mdata[0]
+            print(f"  > Found {source.identifier_name}: {id} in file metadata")
 
-            mdata = source.fetch_and_parse(doi)
+            mdata = source.fetch_and_parse(id)
 
             if mdata:
                 pdf.update_metadata(mdata)
@@ -37,7 +37,7 @@ def check_doi_in_metadata(pdf, sources):
                 return True
     return False
 
-def check_doi_in_text(pdf, sources, auto=False):
+def check_id_in_text(pdf, sources, auto=False):
 
     for source in sources:
         mod = None
@@ -45,18 +45,18 @@ def check_doi_in_text(pdf, sources, auto=False):
         if source.__name__.split('.')[-1] == 'arXiv':
             mod = lambda x: x[::-1]
 
-        dois_in_text = pdf.find_in_text(source.identifier_regex_compiled, mod=mod)
+        ids_in_text = pdf.find_in_text(source.identifier_regex_compiled, mod=mod)
 
         # TODO: Uniquify and fetch one by one?
-        if dois_in_text:
-            print(dois_in_text)
-            doi = dois_in_text[0]
-            print(f"  > Found DOI: {doi} in pdf text")
+        if ids_in_text:
+            print(ids_in_text)
+            id = ids_in_text[0]
+            print(f"  > Found {source.identifier_name}: {id} in pdf text")
 
             if not auto:
-                doi = input_with_prefill("Correct DOI: ", doi)
+                id = input_with_prefill("Correct id: ", id)
 
-            mdata = source.fetch_and_parse(doi)
+            mdata = source.fetch_and_parse(id)
 
             if mdata: 
                 pdf.update_metadata(mdata)
@@ -100,12 +100,12 @@ def driver(fname, **kwargs):
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, name_template=kwargs.name_template)
 
-    print("  > Looking for DOI in file metadata.")
-    if not check_doi_in_metadata(pdf, kwargs.sources):
-        print("  > Couldn't find DOI in file metadata. Looking in text.")
-        if not check_doi_in_text(pdf, kwargs.sources, kwargs.auto):
+    print("  > Looking for IDs in file metadata.")
+    if not check_id_in_metadata(pdf, kwargs.sources):
+        print("  > Couldn't find IDs in file metadata. Looking in text.")
+        if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
             if not kwargs.auto: 
-                print(f"  > Couldn't find DOI in pdf text. Manual input required!")
+                print(f"  > Couldn't find IDs in pdf text. Manual input required!")
                 manual_query(pdf, CrossRef)
 
     # NOTE: Only works with DOI

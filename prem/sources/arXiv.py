@@ -16,6 +16,7 @@ arxiv_namespaces = {
 arxiv_id_regex = r'\d{4}\.\d{4,5}'
 arxiv_id_regex_compiled = re.compile(arxiv_id_regex)
 
+identifier_name = 'arXiv ID'
 identifier_regex = arxiv_id_regex
 identifier_regex_compiled = arxiv_id_regex_compiled
 
