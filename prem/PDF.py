@@ -78,7 +78,13 @@ class PDF:
         return matches
 
     def find_in_metadata(self, pattern, flags=0):
-        compiled_pattern = re.compile(pattern, flags)
+        if isinstance(pattern, str):
+            compiled_pattern = re.compile(pattern, flags)
+        elif isinstance(pattern, re.Pattern):
+            compiled_pattern = pattern
+        else:
+            raise TypeError("Bad pattern object")
+
         matches = []
         for k,v in self.metadata.items():
             if isinstance(v, str):
