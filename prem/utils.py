@@ -64,3 +64,16 @@ def generic_open_linux(fname):
     """
     app = find_generic_pdf_opener_linux()
     return subprocess.Popen([app, fname])
+
+def string_sanitizer(string):
+    sanity_dict = {
+            r'\n': ' ',
+            r'/' : ' ',
+            r'\s+': ' ',
+            r'<[^>]*>(.*)<[^>]*>': r'\1',
+            }
+
+    for k,v in sanity_dict.items():
+        string = re.sub(k, v, str(string))
+
+    return string
