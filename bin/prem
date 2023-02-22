@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from prem import PDF, CrossRef
+from prem import PDF
+from prem.sources import CrossRef, arXiv
 from prem.utils import generic_open_linux, fetch_bibliography
 import argparse
 import re
