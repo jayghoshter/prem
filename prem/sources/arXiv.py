@@ -48,16 +48,15 @@ def parse(root:ET.Element):
         url = entry.find('atom:id', arxiv_namespaces).text
         authors = [author.text for author in entry.findall('atom:author/atom:name', arxiv_namespaces)]
         year = entry.find('atom:published', arxiv_namespaces).text.split('-')[0]
-
-        out['dc:creator'] = authors[0].split()[-1]
-        out['Year'] = year
         id = re.sub("https?://arxiv.org/abs/", '', url)
-        out['URL'] = id
+
+        out['dc:creator'] = authors
+        # out['Year'] = year
+        # out['URL'] = id
 
         out['dc:format'] = 'application/pdf'
         out['dc:identifier'] = f"arXiv:{id}"
         out['dc:title'] = title
-        out['dc:creator'] = ", ".join(str(authors))
         # out['dc:subject'] = 
         # out['dc:description'] = f"{mdata['container-title'][0]}, {mdata['volume']} ({mdata['issued']['date-parts'][0][0]}) {mdata['page']}"
         # out['dc:publisher'] = set(mdata['publisher'])
