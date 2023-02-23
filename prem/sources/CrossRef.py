@@ -64,16 +64,25 @@ def parse(mdata:dict):
 
     try: 
         title = string_sanitizer(mdata['title'][0])
+        container_title = mdata['container-title'][0] if mdata['container-title'] else ''
+
+        if mdata['author']:
+            try: 
+                author = next(filter(lambda x: x['sequence'] == 'first', mdata['author'])).get ('family', '') 
+            except StopIteration: 
+                author = mdata['author'][0].get('family', '')
+        else:
+            author = ''
 
         out['dc:format'] = 'application/pdf'
         out['dc:identifier'] = f"doi:{mdata['DOI']}"
         out['dc:title'] = title
         out['dc:creator'] = list(map(lambda a: f"{a.get('given')} {a.get('family')}" , mdata['author']))
         out['dc:subject'] = set(mdata['subject'])
-        out['dc:description'] = f"{mdata['container-title'][0]}, {mdata['volume']} ({mdata['issued']['date-parts'][0][0]}) {mdata['page']}"
+        out['dc:description'] = f"{container_title}, {mdata['volume']} ({mdata['issued']['date-parts'][0][0]}) {mdata['page']}"
         out['dc:publisher'] = set(mdata['publisher'])
 
-        out['prism3:publicationName'] = mdata['container-title'][0]
+        out['prism3:publicationName'] = container_title
         out['prism3:aggregationType'] = mdata['type']
         # out['prism3:copyright'] = mdata['assertion']...
         out['prism3:issn'] = mdata['ISSN'][0] if mdata['ISSN'] else ''
@@ -88,14 +97,16 @@ def parse(mdata:dict):
         out['pdfx:doi'] = mdata['DOI']
         out['pdfx:CrossMarkDomains'] = mdata['content-domain']['domain']
 
-        out['prem:author'] = next(filter(lambda x: x['sequence'] == 'first', mdata['author']))['family']
+        out['prem:author'] = author
         out['prem:title'] = title
         out['prem:year'] = str(mdata['issued']['date-parts'][0][0])
-    except:
+    except Exception as e:
         with open('prem.dump', 'w') as dumpfile:
             import json
             json.dump(mdata, dumpfile, indent=2)
-        raise RuntimeError("Error with accessing some tags in crossref metadata")
+        raise RuntimeError(f"{e}: Error with accessing some tags in crossref metadata")
+        # print(f"Error with accessing some tags in crossref metadata, {e}")
+        # return defaultdict(str)
 
     return out
 
