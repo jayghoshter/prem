@@ -11,6 +11,54 @@ import click
 from rich import print
 from types import SimpleNamespace
 
+def check_id_in_metadata_parallel(pdf, sources):
+    ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
+
+    if any(ids_in_mdata):
+        for source,ids in zip(sources, ids_in_mdata):
+            if ids:
+                print(f"  > Found {source.identifier_name}: {ids} in file metadata")
+
+    # NOTE: Assumes first matched ID for each source is the only valid one
+    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids[0]) if ids else {}, 
+                 sources, 
+                 ids_in_mdata))
+
+    if any(mdatas):
+        for mdata in mdatas: 
+            pdf.update_metadata(mdata)
+        pdf.rename()
+        return True
+    else:
+        return False
+
+def check_id_in_text_parallel(pdf, sources, auto=False):
+    mods = map(lambda s: (lambda x:x[::-1]) if 'arXiv' in s.__name__ else None, sources)
+    ids_in_text = list(map(lambda s, mod: pdf.find_in_text(s.identifier_regex_compiled, mod=mod), sources, mods))
+
+    if any(ids_in_text):
+        for source,ids in zip(sources, ids_in_text):
+            if ids:
+                print(f"  > Found {source.identifier_name}: {ids} in file metadata")
+
+    # NOTE: Assumes first matched ID for each source is the only valid one
+    if not auto:
+        ids_in_text = list(map(lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0]), sources, ids_in_text))
+    else: 
+        ids_in_text = list(map(lambda ids: ids[0], ids_in_text))
+
+    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids) if ids else {}, 
+                 sources, 
+                 ids_in_text))
+
+    if any(mdatas):
+        for mdata in mdatas: 
+            pdf.update_metadata(mdata)
+        pdf.rename()
+        return True
+    else:
+        return False
+
 def check_id_in_metadata(pdf, sources):
     for source in sources: 
         ids_in_mdata = pdf.find_in_metadata(source.identifier_regex_compiled)
