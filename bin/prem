@@ -11,7 +11,7 @@ import click
 from rich import print
 from types import SimpleNamespace
 
-def check_id_in_metadata_parallel(pdf, sources):
+def check_id_in_metadata(pdf, sources):
     ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
 
     if any(ids_in_mdata):
@@ -32,7 +32,7 @@ def check_id_in_metadata_parallel(pdf, sources):
     else:
         return False
 
-def check_id_in_text_parallel(pdf, sources, auto=False):
+def check_id_in_text(pdf, sources, auto=False):
     mods = map(lambda s: (lambda x:x[::-1]) if 'arXiv' in s.__name__ else None, sources)
     ids_in_text = list(map(lambda s, mod: pdf.find_in_text(s.identifier_regex_compiled, mod=mod), sources, mods))
 
@@ -58,49 +58,6 @@ def check_id_in_text_parallel(pdf, sources, auto=False):
         return True
     else:
         return False
-
-def check_id_in_metadata(pdf, sources):
-    for source in sources: 
-        ids_in_mdata = pdf.find_in_metadata(source.identifier_regex_compiled)
-
-        if ids_in_mdata: 
-            id = ids_in_mdata[0]
-            print(f"  > Found {source.identifier_name}: {id} in file metadata")
-
-            mdata = source.fetch_and_parse(id)
-
-            if mdata:
-                pdf.update_metadata(mdata)
-                pdf.rename()
-                return True
-    return False
-
-def check_id_in_text(pdf, sources, auto=False):
-
-    for source in sources:
-        mod = None
-        # PDFPlumber reverses arXiv:<id> when parsing the text
-        if source.__name__.split('.')[-1] == 'arXiv':
-            mod = lambda x: x[::-1]
-
-        ids_in_text = pdf.find_in_text(source.identifier_regex_compiled, mod=mod)
-
-        # TODO: Uniquify and fetch one by one?
-        if ids_in_text:
-            print(ids_in_text)
-            id = ids_in_text[0]
-            print(f"  > Found {source.identifier_name}: {id} in pdf text")
-
-            if not auto:
-                id = input_with_prefill("Correct id: ", id)
-
-            mdata = source.fetch_and_parse(id)
-
-            if mdata: 
-                pdf.update_metadata(mdata)
-                pdf.rename()
-                return True
-    return False
 
 def manual_query(pdf, source):
     fzf = FzfPrompt()
@@ -139,9 +96,9 @@ def driver(fname, **kwargs):
     pdf = PDF(fname, name_template=kwargs.name_template)
 
     print("  > Looking for IDs in file metadata.")
-    if not check_id_in_metadata_parallel(pdf, kwargs.sources):
+    if not check_id_in_metadata(pdf, kwargs.sources):
         print("  > Couldn't find IDs in file metadata. Looking in text.")
-        if not check_id_in_text_parallel(pdf, kwargs.sources, kwargs.auto):
+        if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
             if not kwargs.auto: 
                 print(f"  > Couldn't find IDs in pdf text. Manual input required!")
                 manual_query(pdf, CrossRef)
