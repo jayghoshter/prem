@@ -86,8 +86,8 @@ def manual_query(pdf, source):
             querystr = querystr[:120]
         crossref_matches = source.query(querystr)
         crossref_matches_processed = list(map(source.parse, crossref_matches))
-        crossref_identifiers = list(map(lambda x: f"{x['Year']} - {x['Author']} - {x['Title']}", crossref_matches_processed))
         selected = fzf.prompt(crossref_identifiers, FZF_FILE_OPTS)
+        crossref_identifiers = list(map(lambda x: f"{x['prem:year']} - {x['prem:author']} - {x['prem:title']}", crossref_matches_processed))
         if selected:
             selected = selected[0]
             selected_index = crossref_identifiers.index(selected)
