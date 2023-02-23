@@ -28,6 +28,15 @@ Another software to handle keywords is in the works. It might be incorporated in
 pip install git+https://github.com/jayghoshter/prem
 ```
 
+## Dependencies
+
+- See requirements.compiled for a guaranteed working python dependency chain.
+- Developed and tested on Linux with Zathura PDF reader.
+- Uses `pikepdf` for reading and writing pdfs
+- Uses `pdfplumber` for converting pdf to text when necessary
+- Uses `click.edit()` for easy text editing
+- Uses `pyfzf` for fuzzy selection
+
 # Usage
 
 ```
@@ -50,14 +59,12 @@ prem [ARGS | FLAGS] [PDF_FILES...]
 # Notes
 - Running the script in `--auto` mode might result in a wrong doi and bad metadata due to incorrect parsing of pdf text. Typically this would result in an invalid DOI, but a valid DOI for another journal article is not impossible.
 - Built with pdfs of journal articles in mind. Currently not considering books and other volumes.
-- See requirements.compiled for a guaranteed working python dependency chain.
-- Developed and tested on Linux with Zathura PDF reader.
-- Uses `pikepdf` and `pdfrw` for reading and writing pdfs
-- Uses `pdfplumber` for converting pdf to text when necessary
-- Uses `click.edit()` for easy text editing
-- Uses `pyfzf` for fuzzy selection
 - Sometimes CrossRef and doi.org have bad/unsanitized titles: 
     - http://dx.doi.org/10.1002/btpr.3065
     - https://dx.doi.org/10.1117/12.363723
     - They are sanitized by prem, but in case some patterns are buggy or incorrect, please report them.
     - only titles are sanitized currently
+- DOIs and identifiers in general evolve and have evolved over time. This means that the current regex might not work well for really old pdfs with different schemes. I will eventually fix this.
+
+# Reporting issues and bugs
+If you encountered a bug or would like to report odd behavior, please open an issue on the GitHub page with a detailed description. You are also welcome to submit a PR.
