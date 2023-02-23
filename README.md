@@ -38,7 +38,7 @@ prem [ARGS | FLAGS] [PDF_FILES...]
 - The `-s` or `--sources` argument expects a list of sources. Choices are any of `['crossref', 'arxiv']`
 - The `-b` or `--bib` argument fetches bibliography info from `doi.org` and dumps it into the provided argument (or `ref.bib` by default)
 - The `-nt` or `--name-template` argument takes a string templated with curly braces to generate pdf names:
-    - e.g., "{year} - {author} - {title}" will result in the pdf being renamed in that manner. 
+    - e.g., `"{year} - {author} - {title}"` will result in the pdf being renamed in that manner. 
     - Only the above tags are currently supported, 
     - `{author}` resolves to the last name of the first author when known.
 - The `-d` or `--doi` argument takes a known DOI and fetches info an renames a given pdf.
