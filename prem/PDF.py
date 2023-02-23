@@ -97,7 +97,7 @@ class PDF:
             else:
                 raise RuntimeError(f"Unknown metadata value type!\n{k}: {v} => {type(v)}")
             matches.extend(res)
-        return matches
+        return list(set(matches))
 
     def unload(self):
         self.metadata = {}
@@ -128,7 +128,7 @@ class PDF:
         if mod:
             text = mod(text)
 
-        return compiled_pattern.findall(text)
+        return list(set(compiled_pattern.findall(text)))
 
 
     def strtemplate_to_str(self, strtemplate = None, mdata = None):
