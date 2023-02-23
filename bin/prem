@@ -43,8 +43,11 @@ def check_id_in_text(pdf, sources, auto=False):
                 print(f"  > Found {source.identifier_name}: {ids} in file metadata")
 
     # NOTE: Assumes first matched ID for each source is the only valid one
-    if not auto:
-        ids_in_text_flat = list(map(lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0]), sources, ids_in_text))
+    if not auto and any(ids_in_text):
+        ids_in_text_flat = list(map(
+            lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0] if ids else ''), 
+            sources, 
+            ids_in_text))
     else: 
         ids_in_text_flat = list(map(lambda ids: ids[0] if ids else None, ids_in_text))
 
