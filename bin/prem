@@ -2,7 +2,7 @@
 
 from prem import PDF
 from prem.sources import CrossRef, arXiv
-from prem.utils import generic_open_linux, fetch_bibliography
+from prem.utils import generic_open_linux, fetch_bibliography, input_with_prefill
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
@@ -10,16 +10,6 @@ import plumbum
 import click
 from rich import print
 from types import SimpleNamespace
-import readline
-
-def input_with_prefill(prompt, text):
-    def hook():
-        readline.insert_text(text)
-        readline.redisplay()
-    readline.set_pre_input_hook(hook)
-    result = input(prompt)
-    readline.set_pre_input_hook()
-    return result
 
 def check_id_in_metadata(pdf, sources):
     for source in sources: 

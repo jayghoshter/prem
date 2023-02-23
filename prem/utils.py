@@ -4,6 +4,7 @@ import re
 from joblib import Memory
 from pathlib import Path
 import subprocess
+import readline
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
 memory = Memory(location=CACHE_DIR, verbose=0)
@@ -77,3 +78,12 @@ def string_sanitizer(string):
         string = re.sub(k, v, str(string))
 
     return string
+
+def input_with_prefill(prompt, text):
+    def hook():
+        readline.insert_text(text)
+        readline.redisplay()
+    readline.set_pre_input_hook(hook)
+    result = input(prompt)
+    readline.set_pre_input_hook()
+    return result
