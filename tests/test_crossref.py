@@ -1,4 +1,4 @@
-from prem import CrossRef
+from prem.sources import CrossRef
 
 def test_crossref_doi():
     cr = CrossRef
