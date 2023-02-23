@@ -86,6 +86,7 @@ class PDF:
             raise TypeError("Bad pattern object")
 
         matches = []
+        res = []
         for k,v in self.metadata.items():
             if isinstance(v, str):
                 res = compiled_pattern.findall(v)
