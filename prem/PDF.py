@@ -1,6 +1,7 @@
 import pdfplumber
 import os
 from pikepdf import Pdf, Name
+import pikepdf.objects as pdfobj
 import re
 from pathlib import Path
 
@@ -78,6 +79,9 @@ class PDF:
         return matches
 
     def find_in_metadata(self, pattern, flags=0):
+        if not self.pdf:
+            return
+
         if isinstance(pattern, str):
             compiled_pattern = re.compile(pattern, flags)
         elif isinstance(pattern, re.Pattern):
@@ -87,16 +91,22 @@ class PDF:
 
         matches = []
         res = []
-        for k,v in self.metadata.items():
-            if isinstance(v, str):
-                res = compiled_pattern.findall(v)
-            elif isinstance(v, list) or isinstance(v, set):
-                res = compiled_pattern.findall(" ".join(str(v)))
-            elif v is None:
-                pass
-            else:
-                raise RuntimeError(f"Unknown metadata value type!\n{k}: {v} => {type(v)}")
-            matches.extend(res)
+        search_spaces = [self.metadata, self.pdf.docinfo]
+
+        for ss in search_spaces:
+            for k,v in ss.items():
+                if isinstance(v, str):
+                    res = compiled_pattern.findall(v)
+                elif isinstance(v, list) or isinstance(v, set):
+                    res = compiled_pattern.findall(" ".join(str(v)))
+                elif isinstance(v, pdfobj.Object):
+                    res = compiled_pattern.findall(str(v))
+                elif v is None:
+                    pass
+                else:
+                    raise RuntimeError(f"Unknown metadata value type!\n{k}: {v} => {type(v)}")
+                matches.extend(res)
+
         return list(set(matches))
 
     def unload(self):
