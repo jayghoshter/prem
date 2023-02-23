@@ -13,7 +13,7 @@ arxiv_namespaces = {
         'atom': "http://www.w3.org/2005/Atom"
         }
 
-arxiv_id_regex = r'\d{4}\.\d{4,5}'
+arxiv_id_regex = r'(?<=arXiv:)\d{4}\.\d{4,5}'
 arxiv_id_regex_compiled = re.compile(arxiv_id_regex)
 
 identifier_name = 'arXiv ID'
