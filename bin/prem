@@ -139,9 +139,9 @@ def driver(fname, **kwargs):
     pdf = PDF(fname, name_template=kwargs.name_template)
 
     print("  > Looking for IDs in file metadata.")
-    if not check_id_in_metadata(pdf, kwargs.sources):
+    if not check_id_in_metadata_parallel(pdf, kwargs.sources):
         print("  > Couldn't find IDs in file metadata. Looking in text.")
-        if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
+        if not check_id_in_text_parallel(pdf, kwargs.sources, kwargs.auto):
             if not kwargs.auto: 
                 print(f"  > Couldn't find IDs in pdf text. Manual input required!")
                 manual_query(pdf, CrossRef)
@@ -161,7 +161,7 @@ def main():
     ap.add_argument("-b", "--bib", nargs='?', const='ref.bib', help="Download bibtex citation info into [ref.bib or provided file]")
     ap.add_argument("-d", "--doi", help="Use provided DOI to fetch metadata and modify pdf")
 
-    ap.add_argument("-s", "--sources", action='extend', nargs='*', choices=['arxiv', 'crossref'], default=['crossref', 'arxiv'] )
+    ap.add_argument("-s", "--sources", action='extend', nargs='*', choices=['arxiv', 'crossref'], default=['arxiv', 'crossref'] )
 
     ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}.pdf", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
 
