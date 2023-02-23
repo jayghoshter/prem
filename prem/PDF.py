@@ -100,6 +100,12 @@ class PDF:
                 elif isinstance(v, list) or isinstance(v, set):
                     res = compiled_pattern.findall(" ".join(str(v)))
                 elif isinstance(v, pdfobj.Object):
+                    try: 
+                        res = compiled_pattern.findall(str(v))
+                    except NotImplementedError:
+                        # When you can't str(v)
+                        pass
+                elif isinstance(v, int):
                     res = compiled_pattern.findall(str(v))
                 elif v is None:
                     pass
