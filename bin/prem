@@ -11,6 +11,41 @@ import click
 from rich import print
 from types import SimpleNamespace
 
+def check_id_in_metadata_and_text(pdf, sources, auto=False):
+    ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
+
+    mods = map(lambda s: (lambda x:x[::-1]) if 'arXiv' in s.__name__ else None, sources)
+    ids_in_text = list(map(lambda s, mod: pdf.find_in_text(s.identifier_regex_compiled, mod=mod), sources, mods))
+
+    ids_total = list(map(lambda idm, idt: list(set(idm + idt)) , ids_in_mdata, ids_in_text))
+
+    if any(ids_total):
+        for source,ids in zip(sources, ids_total):
+            if ids:
+                print(f"  > Found {source.identifier_name}: {ids} in file metadata/text")
+
+    # NOTE: Assumes first matched ID for each source is the only valid one
+    if not auto and any(ids_total):
+        ids_total_flat = list(map(
+            lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0] if ids else ''), 
+            sources, 
+            ids_total))
+    else: 
+        ids_total_flat = list(map(lambda ids: ids[0] if ids else None, ids_total))
+
+    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids) if ids else {}, 
+                 sources, 
+                 ids_total_flat))
+
+    if any(mdatas):
+        for mdata in mdatas: 
+            if mdata:
+                pdf.update_metadata(mdata)
+        pdf.rename()
+        return True
+    else:
+        return False
+
 def check_id_in_metadata(pdf, sources):
     ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
 
@@ -100,12 +135,19 @@ def driver(fname, **kwargs):
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, name_template=kwargs.name_template)
 
-    print("  > Looking for IDs in file metadata.")
-    if not check_id_in_metadata(pdf, kwargs.sources):
-        print("  > Couldn't find IDs in file metadata. Looking in text.")
-        if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
+    if kwargs.mode == 'classic': 
+        print("  > Looking for IDs in file metadata.")
+        if not check_id_in_metadata(pdf, kwargs.sources):
+            print("  > Couldn't find IDs in file metadata. Looking in text.")
+            if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
+                if not kwargs.auto: 
+                    print(f"  > Couldn't find IDs in pdf text. Manual input required!")
+                    manual_query(pdf, CrossRef)
+    elif kwargs.mode == 'complete':
+        print("  > Looking for IDs in file metadata and text.")
+        if not check_id_in_metadata_and_text(pdf, kwargs.sources, kwargs.auto):
             if not kwargs.auto: 
-                print(f"  > Couldn't find IDs in pdf text. Manual input required!")
+                print(f"  > Couldn't find IDs in pdf metadata or text. Manual input required!")
                 manual_query(pdf, CrossRef)
 
     # NOTE: Only works with DOI
@@ -126,6 +168,8 @@ def main():
     ap.add_argument("-s", "--sources", action='extend', nargs='*', choices=['arxiv', 'crossref'], default=['arxiv', 'crossref'] )
 
     ap.add_argument("-nt", "--name-template", default="{year} - {author} - {title}.pdf", help="Name template for pdf filenames. Write metadata keys contained within {} for auto substitution.")
+
+    ap.add_argument("-m", "--mode", choices=['classic', 'complete'], default='complete', help="Classic: Check in pdf meta only -> text only -> manual query\nComplete: Check in pdf meta+text -> manual query")
 
     args = ap.parse_args()
 
