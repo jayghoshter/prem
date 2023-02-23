@@ -11,9 +11,13 @@ memory = Memory(location=CACHE_DIR, verbose=0)
 doi_regex = r'10\.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
 doi_regex_compiled = re.compile(doi_regex)
 
+# Regex to avoid DOIs pertaining to volumes
+doi_journal_regex = r'10\.\d{4,9}/(?!\(ISSN\))[A-Za-z0-9./:;()\-_]+'
+doi_journal_regex_compiled = re.compile(doi_journal_regex)
+
 identifier_name = 'DOI'
-identifier_regex = doi_regex
-identifier_regex_compiled = doi_regex_compiled
+identifier_regex = doi_journal_regex
+identifier_regex_compiled = doi_journal_regex_compiled
 
 @memory.cache
 def fetch_metadata_crossref(doi:str):
