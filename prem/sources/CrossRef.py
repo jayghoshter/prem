@@ -84,7 +84,7 @@ def parse(mdata:dict):
         out['dc:creator'] = list(map(lambda a: f"{a.get('given')} {a.get('family')}" , mdata['author']))
         out['dc:subject'] = set(mdata['subject'])
         out['dc:description'] = f"{container_title}, {mdata['volume']} ({mdata['issued']['date-parts'][0][0]}) {mdata['page']}"
-        out['dc:publisher'] = set(mdata['publisher'])
+        out['dc:publisher'] = mdata['publisher']
 
         out['prism3:publicationName'] = container_title
         out['prism3:aggregationType'] = mdata['type']
@@ -95,7 +95,7 @@ def parse(mdata:dict):
         out['prism3:startingPage'] = mdata['page']
         out['prism3:doi'] = mdata['DOI']
         out['prism3:url'] = mdata['URL']
-        out['prism3:coverDisplayDate'] = "-".join(str(mdata['issued']['date-parts'][0]))
+        out['prism3:coverDisplayDate'] = "-".join(map(str, mdata['issued']['date-parts'][0]))
 
         out['crossmark:DOI'] = mdata['DOI']
         out['pdfx:doi'] = mdata['DOI']
