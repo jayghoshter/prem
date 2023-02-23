@@ -34,6 +34,7 @@ def test_pdf_to_text():
     assert text
     os.remove(filename)
 
+
 def test_pdf_overwrite():
     filename = get_pdf('black_holes')
     doi = '10.1103/PhysRevD.13.191'
@@ -58,3 +59,4 @@ def test_pdf_rename():
     pdf.rename(newfilename)
 
     os.remove(newfilename)
+
