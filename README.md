@@ -51,14 +51,18 @@ prem [ARGS | FLAGS] [PDF_FILES...]
     - Only the above tags are currently supported, 
     - `{author}` resolves to the last name of the first author when known.
 - The `-d` or `--doi` argument takes a known DOI and fetches info an renames a given pdf.
-- The `-m` or `--mode` argument allows switching between the new default `complete` and `classic` modes. 
+- The `-m` or `--mode` argument allows switching between operating modes: `['complete',  'classic', 'metadata|meta', 'text', 'manual|query']`
     - `complete` mode: search pdf metadata and text together for identifiers (DOI/arXivID)
+        - Complete mode doesn't ignore secondary sources if only one is found in the metadata.
     - `classic` mode: search pdf metadata -> search pdf text
-    - Complete mode doesn't ignore secondary sources if only one is found in the metadata.
-    - Classic mode will be faster for newer pdfs with identifiers existing within the metadata
+        - Classic mode will be faster for newer pdfs with identifiers existing within the metadata
+    - `metadata` or `meta` mode: search for identifiers only in pdf metadata. 
+    - `text` mode: search for identifiers only in pdf text
+    - `manual` or `query` mode: perform manual query. Currently ignores `--sources` and only queries CrossRef
 
 # Notes
 - Running the script in `--auto` mode might result in a wrong doi and bad metadata due to incorrect parsing of pdf text. Typically this would result in an invalid DOI, but a valid DOI for another journal article is not impossible.
+- If multiple identifiers from the same source are found in pdf text, their order may not be deterministic. Currently, only the first of these is used to fetch metadata. If one of them is mangled, running `prem` with `--auto` may produce differring results with different runs.
 - Built with pdfs of journal articles in mind. Currently not considering books and other volumes.
 - Sometimes CrossRef and doi.org have bad/unsanitized titles: 
     - http://dx.doi.org/10.1002/btpr.3065
