@@ -9,6 +9,8 @@ import re
 from pyfzf.pyfzf import FzfPrompt
 import click
 from types import SimpleNamespace
+from multiprocessing import Pool
+from functools import partial
 
 def check_id_in_metadata_and_text(pdf, sources, auto=False):
     ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
@@ -134,6 +136,14 @@ def driver(fname, **kwargs):
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, name_template=kwargs.name_template)
 
+    # TODO: automate with inspect/importlib
+    SOURCE_MAPPING = {
+            'arxiv': arXiv,
+            'crossref': CrossRef
+            }
+
+    kwargs.sources = [ SOURCE_MAPPING[s] for s in kwargs.sources ]
+
     if kwargs.mode == 'classic': 
         logger.print("Looking for IDs in file metadata.", indent_level=1)
         if not check_id_in_metadata(pdf, kwargs.sources):
@@ -182,15 +192,9 @@ def main():
 
     ap.add_argument("-m", "--mode", choices=['classic', 'complete', 'meta', 'metadata', 'text', 'manual', 'query'], default='complete', help="Classic: Check in pdf meta only -> text only -> manual query\nComplete: Check in pdf meta+text -> manual query")
 
+    ap.add_argument("-p", "--parallel", action='store_true', help="Run code in parallel. Implies --auto. STDOUT will be garbled.")
+
     args = ap.parse_args()
-
-    # TODO: automate with inspect/importlib
-    SOURCE_MAPPING = {
-            'arxiv': arXiv,
-            'crossref': CrossRef
-            }
-
-    args.sources = [ SOURCE_MAPPING[s] for s in args.sources ]
 
     if args.doi:
         assert len(args.files) == 1
@@ -200,8 +204,14 @@ def main():
             pdf.update_metadata(mdata)
             pdf.rename()
     else: 
-        for current_file in args.files: 
-            driver(current_file, **vars(args))
+        if args.parallel:
+            args.auto = True
+            partial_driver = partial(driver, **vars(args))
+            with Pool() as pool:
+                pool.map(partial_driver, args.files)
+        else: 
+            for current_file in args.files: 
+                driver(current_file, **vars(args))
 
 if __name__ == "__main__": 
     main()
