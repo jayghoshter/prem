@@ -30,6 +30,9 @@ def fetch_metadata_arxiv(id:str):
     return ET.fromstring(response.content)
 
 def fetch_and_parse(arxiv_id:str):
+    """
+    Fetch metadata from arXiv based on provided id and parse it into a useful dict.
+    """
     module_name = __name__.split('.')[-1]
 
     mdata = fetch_metadata_arxiv(arxiv_id)

@@ -38,6 +38,9 @@ def fetch_by_doi(doi:str):
     return fetch_metadata_crossref(doi)
 
 def fetch_and_parse(doi:str):
+    """
+    Fetch metadata from CrossRef based on provided id and parse it into a useful dict.
+    """
     module_name = __name__.split('.')[-1]
 
     mdata = fetch_by_doi(doi)
