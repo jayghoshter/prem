@@ -62,25 +62,37 @@ def find_generic_pdf_opener_linux():
 def generic_open_linux(fname):
     """
     Open a pdf file using the system default in Linux.
-    Return the subprocess object
+    Return the subprocess object.
     """
     app = find_generic_pdf_opener_linux()
     return subprocess.Popen([app, fname])
 
-def string_sanitizer(string):
-    sanity_dict = {
-            r'\n': ' ',
-            r'/' : ' ',
-            r'\s+': ' ',
-            r'<[^>]*>(.*)<[^>]*>': r'\1',
-            }
+def string_sanitizer(string, rules=None):
+    """
+    Sanitize a string based on some rules.
+    Default rules: 
+        - Remove newlines
+        - Remove forward slashes
+        - Remove http tags
+        - Squeeze spaces
+    """
+    if rules is None:
+        rules = {
+                r'\n': ' ',
+                r'/' : ' ',
+                r'\s+': ' ',
+                r'<[^>]*>(.*)<[^>]*>': r'\1',
+                }
 
-    for k,v in sanity_dict.items():
+    for k,v in rules.items():
         string = re.sub(k, v, str(string))
 
     return string
 
 def input_with_prefill(prompt, text, indent_level=0, indent_step=2):
+    """
+    Take a user input with a prompt and pre-filled text.
+    """
     def hook():
         readline.insert_text(text)
         readline.redisplay()
