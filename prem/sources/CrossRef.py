@@ -3,6 +3,7 @@ from collections import defaultdict
 from joblib import Memory
 import os
 from prem.utils import string_sanitizer
+from prem import logger
 import re
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
@@ -27,7 +28,7 @@ def fetch_metadata_crossref(doi:str):
     response = requests.get(f"https://api.crossref.org/works/{doi}")
 
     if not response.ok: 
-        print(f"Error fetching data for doi: {doi}")
+        logger.err(f"Error fetching data for doi: {doi}", indent_level=1)
         return {}
         # raise RuntimeError(f"Error fetching data for doi: {doi}")
 
@@ -41,9 +42,9 @@ def fetch_and_parse(doi:str):
 
     mdata = fetch_by_doi(doi)
     if not mdata:
-        print(f"  > Error fetching metadata from {module_name}")
+        logger.err(f"Error fetching metadata from {module_name}", indent_level=1)
         return defaultdict(str)
-    print(f"  > Fetched metadata from {module_name} or local cache")
+    logger.info(f"Fetched metadata from {module_name} or local cache", indent_level=1)
 
     return parse(mdata)
 

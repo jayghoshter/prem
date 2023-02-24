@@ -4,6 +4,7 @@ from pikepdf import Pdf, Name
 import pikepdf.objects as pdfobj
 import re
 from pathlib import Path
+from prem import logger
 
 class PDF:
     doi_regex = r'10\.\d{4,9}/[A-Za-z0-9./:;()\-_]+'
@@ -63,7 +64,7 @@ class PDF:
             newname = self.strtemplate_to_str(name_template)
         self.write(newname)
         if str(self.filename) != str(newname): 
-            print(f"Renaming {self.filename} -> {newname}")
+            logger.print(f"Renaming file to: [bold magenta]{newname}[/bold magenta]", indent_level=1)
             os.remove(self.filename)
         self.filename = newname
 

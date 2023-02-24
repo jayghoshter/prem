@@ -5,6 +5,7 @@ import os
 import xml.etree.ElementTree as ET
 import re
 from prem.utils import string_sanitizer
+from prem import logger
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
 memory = Memory(location=CACHE_DIR, verbose=0)
@@ -33,9 +34,9 @@ def fetch_and_parse(arxiv_id:str):
 
     mdata = fetch_metadata_arxiv(arxiv_id)
     if not mdata.find('atom:entry', arxiv_namespaces):
-        print(f"  > Error fetching metadata from {module_name}")
+        logger.err(f"Error fetching metadata from {module_name}", indent_level=1)
         return defaultdict(str)
-    print(f"  > Fetched metadata from {module_name} or local cache")
+    logger.info(f"Fetched metadata from {module_name} or local cache", indent_level=1)
 
     return parse(mdata)
 

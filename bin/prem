@@ -3,12 +3,12 @@
 from prem import PDF
 from prem.sources import CrossRef, arXiv
 from prem.utils import generic_open_linux, fetch_bibliography, input_with_prefill
+from prem import logger
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
 import plumbum
 import click
-from rich import print
 from types import SimpleNamespace
 
 def check_id_in_metadata_and_text(pdf, sources, auto=False):
@@ -22,7 +22,7 @@ def check_id_in_metadata_and_text(pdf, sources, auto=False):
     if any(ids_total):
         for source,ids in zip(sources, ids_total):
             if ids:
-                print(f"  > Found {source.identifier_name}: {ids} in file metadata/text")
+                logger.print(f"Found {source.identifier_name}: {ids} in file metadata/text", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
     if not auto and any(ids_total):
@@ -52,7 +52,7 @@ def check_id_in_metadata(pdf, sources):
     if any(ids_in_mdata):
         for source,ids in zip(sources, ids_in_mdata):
             if ids:
-                print(f"  > Found {source.identifier_name}: {ids} in file metadata")
+                logger.print(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
     mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids[0]) if ids else {}, 
@@ -75,7 +75,7 @@ def check_id_in_text(pdf, sources, auto=False):
     if any(ids_in_text):
         for source,ids in zip(sources, ids_in_text):
             if ids:
-                print(f"  > Found {source.identifier_name}: {ids} in file metadata")
+                logger.print(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
     if not auto and any(ids_in_text):
@@ -131,23 +131,25 @@ def manual_query(pdf, source):
     pdf_process.kill()
 
 def driver(fname, **kwargs):
-    print(f"Processing: {fname}")
+    logger.print(f"Processing: [bold magenta]{fname}[/bold magenta]")
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, name_template=kwargs.name_template)
 
     if kwargs.mode == 'classic': 
-        print("  > Looking for IDs in file metadata.")
+        logger.print("Looking for IDs in file metadata.", indent_level=1)
         if not check_id_in_metadata(pdf, kwargs.sources):
-            print("  > Couldn't find IDs in file metadata. Looking in text.")
+            logger.warn("Couldn't find IDs in pdf metadata. Looking in text.", indent_level=1)
             if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
+                logger.warn(f"Couldn't find IDs in pdf text.", indent_level=1)
                 if not kwargs.auto: 
-                    print(f"  > Couldn't find IDs in pdf text. Manual input required!")
+                    logger.warn(f"Manual input required!", indent_level=2)
                     manual_query(pdf, CrossRef)
     elif kwargs.mode == 'complete':
-        print("  > Looking for IDs in file metadata and text.")
+        logger.print("Looking for IDs in pdf metadata and text.", indent_level=1)
         if not check_id_in_metadata_and_text(pdf, kwargs.sources, kwargs.auto):
+            logger.warn(f"Couldn't find IDs in pdf metadata or text.", indent_level=1)
             if not kwargs.auto: 
-                print(f"  > Couldn't find IDs in pdf metadata or text. Manual input required!")
+                logger.warn(f"Manual input required!", indent_level=2)
                 manual_query(pdf, CrossRef)
 
     # NOTE: Only works with DOI
