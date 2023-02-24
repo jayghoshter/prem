@@ -70,6 +70,10 @@ def parse(mdata:dict):
     out = defaultdict(str)
     mdata = defaultdict(str, mdata)
 
+    if mdata['type'] == 'journal-issue':
+        logger.err("DOI corresponds to a journal issue, not an article!")
+        return out
+
     try: 
         title = string_sanitizer(mdata['title'][0])
         container_title = mdata['container-title'][0] if mdata['container-title'] else ''
