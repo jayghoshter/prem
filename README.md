@@ -69,7 +69,7 @@ prem [ARGS | FLAGS] [PDF_FILES...]
     - https://dx.doi.org/10.1117/12.363723
     - They are sanitized by prem, but in case some patterns are buggy or incorrect, please report them.
     - only titles are sanitized currently
-- DOIs and identifiers in general evolve and have evolved over time. This means that the current regex might not work well for really old pdfs with different schemes. I will eventually fix this.
+- DOIs and identifiers in general evolve and have evolved over time. This means that the current regex might not work well for really old pdfs with different schemes. In this case, manual query should still work. I will eventually fix this.
 
 # Reporting issues and bugs
 If you encountered a bug or would like to report odd behavior, please open an issue on the GitHub page with a detailed description. You are also welcome to submit a PR.
