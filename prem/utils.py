@@ -80,11 +80,14 @@ def string_sanitizer(string):
 
     return string
 
-def input_with_prefill(prompt, text):
+def input_with_prefill(prompt, text, indent_level=0, indent_step=2):
     def hook():
         readline.insert_text(text)
         readline.redisplay()
     readline.set_pre_input_hook(hook)
+    indent_str = logger.log_get_indent_string(indent_level=indent_level, indent_step=indent_step)
+    if indent_str: 
+        prompt = f"{indent_str} {prompt}"
     result = input(prompt)
     readline.set_pre_input_hook()
     return result
