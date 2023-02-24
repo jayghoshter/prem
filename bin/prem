@@ -7,7 +7,6 @@ from prem import logger
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
-import plumbum
 import click
 from types import SimpleNamespace
 
