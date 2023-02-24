@@ -63,7 +63,7 @@ def err(*message, indent_level=0, indent_step=2, prefix=True):
     """
     Write to "stderr"
     """
-    generic_log(*message, indent_level=indent_level, indent_step=indent_step, style='error', prefix=prefix)
+    generic_log(*message, indent_level=indent_level, indent_step=indent_step, style='error', prefix=prefix, err=True)
 
 def warn(*message, indent_level=0, indent_step=2, prefix=False):
     """
