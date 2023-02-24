@@ -55,6 +55,7 @@ prem [ARGS | FLAGS] [PDF_FILES...]
     - `complete` mode: search pdf metadata and text together for identifiers (DOI/arXivID)
     - `classic` mode: search pdf metadata -> search pdf text
     - Complete mode doesn't ignore secondary sources if only one is found in the metadata.
+    - Classic mode will be faster for newer pdfs with identifiers existing within the metadata
 
 # Notes
 - Running the script in `--auto` mode might result in a wrong doi and bad metadata due to incorrect parsing of pdf text. Typically this would result in an invalid DOI, but a valid DOI for another journal article is not impossible.
