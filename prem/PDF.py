@@ -148,7 +148,7 @@ class PDF:
         return list(set(compiled_pattern.findall(text)))
 
 
-    def strtemplate_to_str(self, strtemplate = None, mdata = None):
+    def strtemplate_to_str(self, strtemplate = None, mdata = None, ns_prefix = 'prem'):
         """
         Given string template like strtemplate = "{year} - {author} - {title}", 
         find the corresponding keys and values in metadata dictionary and build a corresponding string.
@@ -160,7 +160,7 @@ class PDF:
 
         strtemplate = strtemplate.lower()
         tags =  re.findall(r'{\w+}', strtemplate)
-        values = list(map(lambda x: mdata['prem:' + x[1:-1]], tags))
+        values = list(map(lambda x: mdata[ f"{ns_prefix}:{x[1:-1]}" ], tags))
         final_string = strtemplate
         for t,v in zip(tags, values):
             final_string = final_string.replace(t, str(v))
