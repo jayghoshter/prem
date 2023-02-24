@@ -3,16 +3,18 @@
 from prem import PDF
 from prem.sources import CrossRef, arXiv
 from prem.utils import generic_open_linux, fetch_bibliography, input_with_prefill
-from prem import logger
+from prem.logging import defaultLogger, CustomLogger
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
 import click
 from types import SimpleNamespace
-from multiprocessing import Pool
+from multiprocessing import Pool, Lock
 from functools import partial
 
-def check_id_in_metadata_and_text(pdf, sources, auto=False):
+def check_id_in_metadata_and_text(pdf, sources, auto=False, logger=None):
+    logger = logger or defaultLogger
+
     ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
 
     mods = map(lambda s: (lambda x:x[::-1]) if 'arXiv' in s.__name__ else None, sources)
@@ -23,7 +25,7 @@ def check_id_in_metadata_and_text(pdf, sources, auto=False):
     if any(ids_total):
         for source,ids in zip(sources, ids_total):
             if ids:
-                logger.print(f"Found {source.identifier_name}: {ids} in file metadata/text", indent_level=1)
+                logger.info(f"Found {source.identifier_name}: {ids} in file metadata/text", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
     if not auto and any(ids_total):
@@ -47,13 +49,15 @@ def check_id_in_metadata_and_text(pdf, sources, auto=False):
     else:
         return False
 
-def check_id_in_metadata(pdf, sources):
+def check_id_in_metadata(pdf, sources, logger=None):
+    logger = logger or defaultLogger
+
     ids_in_mdata = list(map(lambda s: pdf.find_in_metadata(s.identifier_regex_compiled), sources))
 
     if any(ids_in_mdata):
         for source,ids in zip(sources, ids_in_mdata):
             if ids:
-                logger.print(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
+                logger.info(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
     mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids[0]) if ids else {}, 
@@ -69,14 +73,16 @@ def check_id_in_metadata(pdf, sources):
     else:
         return False
 
-def check_id_in_text(pdf, sources, auto=False):
+def check_id_in_text(pdf, sources, auto=False, logger=None):
+    logger = logger or defaultLogger
+
     mods = map(lambda s: (lambda x:x[::-1]) if 'arXiv' in s.__name__ else None, sources)
     ids_in_text = list(map(lambda s, mod: pdf.find_in_text(s.identifier_regex_compiled, mod=mod), sources, mods))
 
     if any(ids_in_text):
         for source,ids in zip(sources, ids_in_text):
             if ids:
-                logger.print(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
+                logger.info(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
     if not auto and any(ids_in_text):
@@ -132,9 +138,13 @@ def manual_query(pdf, source):
     pdf_process.kill()
 
 def driver(fname, **kwargs):
-    logger.print(f"Processing: [bold magenta]{fname}[/bold magenta]")
     kwargs = SimpleNamespace(**kwargs)
     pdf = PDF(fname, name_template=kwargs.name_template)
+
+    # TODO: Check if this actually creates a CustomLogger obj per process
+    logger = CustomLogger('prem') if kwargs.parallel else defaultLogger
+
+    logger.info(f"Processing: [bold magenta]{fname}[/bold magenta]")
 
     # TODO: automate with inspect/importlib
     SOURCE_MAPPING = {
@@ -145,31 +155,32 @@ def driver(fname, **kwargs):
     kwargs.sources = [ SOURCE_MAPPING[s] for s in kwargs.sources ]
 
     if kwargs.mode == 'classic': 
-        logger.print("Looking for IDs in file metadata.", indent_level=1)
-        if not check_id_in_metadata(pdf, kwargs.sources):
-            logger.warn("Couldn't find IDs in pdf metadata. Looking in text.", indent_level=1)
-            if not check_id_in_text(pdf, kwargs.sources, kwargs.auto):
-                logger.warn(f"Couldn't find IDs in pdf text.", indent_level=1)
+        logger.info("Looking for IDs in file metadata.", indent_level=1)
+        if not check_id_in_metadata(pdf, kwargs.sources, logger):
+            logger.warning("Couldn't find IDs in pdf metadata. Looking in text.", indent_level=1)
+            if not check_id_in_text(pdf, kwargs.sources, kwargs.auto, logger):
+                logger.warning(f"Couldn't find IDs in pdf text.", indent_level=1)
                 if not kwargs.auto: 
-                    logger.warn(f"Manual input required!", indent_level=2)
+                    logger.warning(f"Manual input required!", indent_level=2)
                     manual_query(pdf, CrossRef)
     elif kwargs.mode == 'complete':
-        logger.print("Looking for IDs in pdf metadata and text.", indent_level=1)
-        if not check_id_in_metadata_and_text(pdf, kwargs.sources, kwargs.auto):
-            logger.warn(f"Couldn't find IDs in pdf metadata or text.", indent_level=1)
+        logger.info("Looking for IDs in pdf metadata and text.", indent_level=1)
+        if not check_id_in_metadata_and_text(pdf, kwargs.sources, kwargs.auto, logger):
+            logger.warning(f"Couldn't find IDs in pdf metadata or text.", indent_level=1)
             if not kwargs.auto: 
-                logger.warn(f"Manual input required!", indent_level=2)
+                logger.warning(f"Manual input required!", indent_level=2,)
                 manual_query(pdf, CrossRef)
     elif kwargs.mode in ['meta', 'metadata']: 
-        logger.print("Looking for IDs in pdf metadata only.", indent_level=1)
-        check_id_in_metadata(pdf, kwargs.sources)
+        logger.info("Looking for IDs in pdf metadata only.", indent_level=1)
+        check_id_in_metadata(pdf, kwargs.sources, logger)
     elif kwargs.mode in ['text']: 
-        logger.print("Looking for IDs in pdf text only.", indent_level=1)
-        check_id_in_text(pdf, kwargs.sources, kwargs.auto)
+        logger.info("Looking for IDs in pdf text only.", indent_level=1)
+        check_id_in_text(pdf, kwargs.sources, kwargs.auto, logger)
     elif kwargs.mode in ['manual', 'query']: 
-        logger.print("Looking for IDs in pdf text only.", indent_level=1)
+        logger.info("Looking for IDs in pdf text only.", indent_level=1)
         manual_query(pdf, CrossRef)
 
+    # logger.flush(lock)
 
     # NOTE: Only works with DOI
     if dois := pdf.match_metadata_fields('doi'):

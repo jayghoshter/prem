@@ -3,7 +3,7 @@ from collections import defaultdict
 from joblib import Memory
 import os
 from prem.utils import string_sanitizer
-from prem import logger
+from prem.logging import defaultLogger
 import re
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
@@ -28,28 +28,27 @@ def fetch_metadata_crossref(doi:str):
     response = requests.get(f"https://api.crossref.org/works/{doi}")
 
     if not response.ok: 
-        logger.err(f"Error fetching data for doi: {doi}", indent_level=1)
         return {}
-        # raise RuntimeError(f"Error fetching data for doi: {doi}")
 
     return response.json()["message"]
 
 def fetch_by_doi(doi:str):
     return fetch_metadata_crossref(doi)
 
-def fetch_and_parse(doi:str):
+def fetch_and_parse(doi:str, logger=None):
     """
     Fetch metadata from CrossRef based on provided id and parse it into a useful dict.
     """
+    logger = logger or defaultLogger
     module_name = __name__.split('.')[-1]
 
     mdata = fetch_by_doi(doi)
     if not mdata:
-        logger.err(f"Error fetching metadata from {module_name}", indent_level=1)
+        logger.error(f"Error fetching metadata from {module_name}", indent_level=1)
         return defaultdict(str)
     logger.info(f"Fetched metadata from {module_name} or local cache", indent_level=1)
 
-    return parse(mdata)
+    return parse(mdata, logger)
 
 def query(string):
     """ Given a title string, return search results """
@@ -63,15 +62,16 @@ def query(string):
 
     return result["items"]
 
-def parse(mdata:dict): 
+def parse(mdata:dict, logger=None): 
     """
     Extract metadata from given crossref metadata dictionary.
     """
     out = defaultdict(str)
     mdata = defaultdict(str, mdata)
+    logger = logger or defaultLogger
 
     if mdata['type'] == 'journal-issue':
-        logger.err("DOI corresponds to a journal issue, not an article!")
+        logger.error("DOI corresponds to a journal issue, not an article!", indent_level=1)
         return out
 
     try: 

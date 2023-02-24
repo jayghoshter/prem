@@ -5,7 +5,7 @@ from joblib import Memory
 from pathlib import Path
 import subprocess
 import readline
-from prem import logger
+from prem.logging import defaultLogger, get_indent_string
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
 memory = Memory(location=CACHE_DIR, verbose=0)
@@ -19,7 +19,7 @@ def fetch_bibliography(doi:str):
     response = requests.get(f"https://dx.doi.org/{doi}", headers=header)
 
     if not response.ok: 
-        logger.err(f"Error fetching bibtex for doi: {doi}", indent_level=1)
+        defaultLogger.error(f"Error fetching bibtex for doi: {doi}", indent_level=1)
         return ''
 
     return response.text.lstrip()
@@ -89,15 +89,17 @@ def string_sanitizer(string, rules=None):
 
     return string
 
-def input_with_prefill(prompt, text, indent_level=0, indent_step=2):
+def input_with_prefill(prompt, text, logger=None, indent_level=0, indent_step=2):
     """
     Take a user input with a prompt and pre-filled text.
     """
+    logger=logger or defaultLogger
+
     def hook():
         readline.insert_text(text)
         readline.redisplay()
     readline.set_pre_input_hook(hook)
-    indent_str = logger.log_get_indent_string(indent_level=indent_level, indent_step=indent_step)
+    indent_str = get_indent_string(indent_level=indent_level, indent_step=indent_step)
     if indent_str: 
         prompt = f"{indent_str} {prompt}"
     result = input(prompt)
