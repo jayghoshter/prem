@@ -120,6 +120,36 @@ class CustomLogger(Logger):
         super()._log(level, msg, args, exc_info=exc_info, extra=extra, stack_info=stack_info, stacklevel=stacklevel)
 
 
+class BufferedLogger(CustomLogger):
+    def __init__(self, name, level=logging.NOTSET):
+        """
+        Initialize the logger with a name and an optional level.
+        """
+        super().__init__(name, level)
+        self.log_data = []
+
+    # Override _log() to modify message with indent_str
+    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False,
+             stacklevel=1, **kwargs):
+
+        indent_level = kwargs.get('indent_level', log_default_indent_level)
+        indent_step = kwargs.get('indent_step', log_default_indent_step)
+        indent_caret = kwargs.get('indent_caret', log_default_indent_caret)
+        indent_str = get_indent_string(indent_level, indent_step, indent_caret)
+        if indent_str:
+            msg = f"{indent_str} {msg}"
+
+        if extra is None:
+            extra = {}
+        extra['style'] = logging._levelToName[level].lower()
+        self.log_data.append((level, msg, args, exc_info, extra, stack_info, stacklevel))
+
+    def flush(self, lock):
+        lock.acquire()
+        for level, msg, args, exc_info, extra, stack_info, stacklevel in self.log_data:
+            super()._log(level, msg, args, exc_info=exc_info, extra=extra, stack_info=stack_info, stacklevel=stacklevel)
+        lock.release()
+
 # logging.setLoggerClass(CustomLogger)
 
 # defaultLogger = logging.getLogger(__name__)

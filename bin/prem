@@ -3,7 +3,7 @@
 from prem import PDF
 from prem.sources import CrossRef, arXiv
 from prem.utils import generic_open_linux, fetch_bibliography, input_with_prefill
-from prem.logging import defaultLogger, CustomLogger
+from prem.logging import defaultLogger, BufferedLogger
 import argparse
 import re
 from pyfzf.pyfzf import FzfPrompt
@@ -36,7 +36,7 @@ def check_id_in_metadata_and_text(pdf, sources, auto=False, logger=None):
     else: 
         ids_total_flat = list(map(lambda ids: ids[0] if ids else None, ids_total))
 
-    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids) if ids else {}, 
+    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids, logger) if ids else {}, 
                  sources, 
                  ids_total_flat))
 
@@ -60,7 +60,7 @@ def check_id_in_metadata(pdf, sources, logger=None):
                 logger.info(f"Found {source.identifier_name}: {ids} in file metadata", indent_level=1)
 
     # NOTE: Assumes first matched ID for each source is the only valid one
-    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids[0]) if ids else {}, 
+    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids[0], logger) if ids else {}, 
                  sources, 
                  ids_in_mdata))
 
@@ -93,7 +93,7 @@ def check_id_in_text(pdf, sources, auto=False, logger=None):
     else: 
         ids_in_text_flat = list(map(lambda ids: ids[0] if ids else None, ids_in_text))
 
-    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids) if ids else {}, 
+    mdatas = list(map(lambda s, ids: s.fetch_and_parse(ids, logger) if ids else {}, 
                  sources, 
                  ids_in_text_flat))
 
@@ -142,7 +142,7 @@ def driver(fname, **kwargs):
     pdf = PDF(fname, name_template=kwargs.name_template)
 
     # TODO: Check if this actually creates a CustomLogger obj per process
-    logger = CustomLogger('prem') if kwargs.parallel else defaultLogger
+    logger = BufferedLogger('prem') if kwargs.parallel else defaultLogger
 
     logger.info(f"Processing: [bold magenta]{fname}[/bold magenta]")
 
@@ -180,7 +180,8 @@ def driver(fname, **kwargs):
         logger.info("Looking for IDs in pdf text only.", indent_level=1)
         manual_query(pdf, CrossRef)
 
-    # logger.flush(lock)
+    if kwargs.parallel:
+        logger.flush(lock)
 
     # NOTE: Only works with DOI
     if dois := pdf.match_metadata_fields('doi'):
@@ -207,6 +208,7 @@ def main():
 
     args = ap.parse_args()
 
+
     if args.doi:
         assert len(args.files) == 1
         pdf = PDF(args.files[0], name_template=args.name_template)
@@ -217,6 +219,8 @@ def main():
     else: 
         if args.parallel:
             args.auto = True
+            global lock 
+            lock = Lock()
             partial_driver = partial(driver, **vars(args))
             with Pool() as pool:
                 pool.map(partial_driver, args.files)
