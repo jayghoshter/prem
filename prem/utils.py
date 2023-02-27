@@ -95,6 +95,9 @@ def input_with_prefill(prompt, text, logger=None, indent_level=0, indent_step=2)
     """
     logger=logger or defaultLogger
 
+    if text is None:
+        return ''
+
     def hook():
         readline.insert_text(text)
         readline.redisplay()

@@ -30,7 +30,7 @@ def check_id_in_metadata_and_text(pdf, sources, auto=False, logger=None):
     # NOTE: Assumes first matched ID for each source is the only valid one
     if not auto and any(ids_total):
         ids_total_flat = list(map(
-            lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0] if ids else '', indent_level=1), 
+            lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0] if ids else None, indent_level=1), 
             sources, 
             ids_total))
     else: 
@@ -87,7 +87,7 @@ def check_id_in_text(pdf, sources, auto=False, logger=None):
     # NOTE: Assumes first matched ID for each source is the only valid one
     if not auto and any(ids_in_text):
         ids_in_text_flat = list(map(
-            lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0] if ids else ''), 
+            lambda sources, ids: input_with_prefill(f"Correct {sources.identifier_name} id: ", ids[0] if ids else None), 
             sources, 
             ids_in_text))
     else: 
