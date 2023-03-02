@@ -22,8 +22,7 @@ def fetch_bibliography(doi:str):
         defaultLogger.error(f"Error fetching bibtex for doi: {doi}", indent_level=1)
         return ''
 
-    return response.text.lstrip()
-
+    return response.content.decode('utf-8', 'strict').lstrip()
 
 def find_generic_pdf_opener_linux():
     """
