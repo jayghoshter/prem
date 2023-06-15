@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import readline
 from prem.logging import defaultLogger, get_indent_string
+import re
 
 CACHE_DIR = f"{os.environ['HOME']}/.cache/prem"
 memory = Memory(location=CACHE_DIR, verbose=0)
@@ -22,7 +23,14 @@ def fetch_bibliography(doi:str):
         defaultLogger.error(f"Error fetching bibtex for doi: {doi}", indent_level=1)
         return ''
 
-    return response.content.decode('utf-8', 'strict').lstrip()
+    bib_text = response.content.decode('utf-8', 'strict').lstrip()
+    author_match = re.search('(?<=author={)[^}]*(?=})', bib_text)
+    if author_match:
+        authors = author_match.group(0)
+        firstauthor = authors.split(',')[0]
+        bib_text = bib_text.replace('@article{', '@article{' + firstauthor)
+
+    return bib_text
 
 def find_generic_pdf_opener_linux():
     """
